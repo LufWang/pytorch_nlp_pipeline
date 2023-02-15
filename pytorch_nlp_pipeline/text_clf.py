@@ -404,7 +404,7 @@ class Trainer:
                                     'val_score': val_score,
                                     'val_loss': float(np.round(np.mean(val_losses), 4)),
                                     'time_generated': datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
-                                    'focused_labels':  [self.indexes_to_labels[x]for x in focused_indexes] if focused_indexes  else [],
+                                    'focused_labels':  [indexes_to_labels[x]for x in focused_indexes] if focused_indexes  else [],
                                     'val_score_by_focused_label': val_score_by_label
                                 }
                     
