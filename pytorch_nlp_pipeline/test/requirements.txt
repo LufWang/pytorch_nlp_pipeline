@@ -1,0 +1,6 @@
+torch==1.12.1
+transformers
+pandas
+shortuuid
+tabulate
+scikit-learn
