@@ -244,6 +244,7 @@ class Trainer:
         # load tokenizer and model
         tokenizer = ModelModule.tokenizer 
         model = ModelModule.load_pretrained(num_classes, self.device)
+        model = model.to(self.device)
 
         train_data_loader = DataModule.create_data_loader(df_train, tokenizer)
         val_data_loader = DataModule.create_data_loader(df_val, tokenizer)

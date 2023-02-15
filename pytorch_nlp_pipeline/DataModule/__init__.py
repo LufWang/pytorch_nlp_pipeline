@@ -50,36 +50,6 @@ class build_torch_dataset(Dataset):
                 }
 
 
-def create_data_loader(df, text_col, label_col, tokenizer, max_len, batch_size):
-    """
-    Construct data loader, on a torch dataset
-    
-    input:
-        dataframe
-        text column name
-        label column name
-        tokenizer
-        max_len
-        batch_size
-        
-    output:
-        torch dataloader object
-    """
-    ds = build_torch_dataset(
-                            texts=df[text_col].to_numpy(),
-                            labels=df[label_col].to_numpy(),
-                            tokenizer=tokenizer,
-                            max_len=max_len
-                              )
-    return DataLoader(
-                        ds,
-                        batch_size=batch_size,
-                        num_workers=0,
-                        shuffle = False,
-                        drop_last = False
-                      )
-
-
 def split_data_w_sample(df, 
                         label_col, 
                         random_seed, 
