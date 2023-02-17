@@ -198,8 +198,8 @@ class Trainer:
         
         # save file in the files
         for file_name in files:
-            file_name = model_id + '|' + file_name
             file = json.dumps(files[file_name], ensure_ascii=False, indent=4)
+            file_name = model_id + '|' + file_name
             blob_name = os.path.join(blob_name_dir, file_name)
             saver.upload_from_memory(file, blob_name)
 
