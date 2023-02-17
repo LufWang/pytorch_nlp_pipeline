@@ -185,11 +185,11 @@ class Trainer:
         model_id = shortuuid.ShortUUID().random(length=12)
 
         # change here 
-        blob_name_dir = os.path.join(dir_path, model_id + '|' + model_name)
+        blob_name_dir = os.path.join(dir_path, model_id + '-' + model_name)
 
         
         # save torch model
-        model_name = model_id + '|' + 'model.bin'
+        model_name = model_id + '-' + 'model.bin'
         blob_name = os.path.join(blob_name_dir, model_name)
         saver.upload_torch_model(model, blob_name)
 
@@ -199,7 +199,7 @@ class Trainer:
         # save file in the files
         for file_name in files:
             file = json.dumps(files[file_name], ensure_ascii=False, indent=4)
-            file_name = model_id + '|' + file_name
+            file_name = model_id + '-' + file_name
             blob_name = os.path.join(blob_name_dir, file_name)
             saver.upload_from_memory(file, blob_name)
 
