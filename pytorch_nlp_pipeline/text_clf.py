@@ -11,7 +11,7 @@ import json
 import shortuuid
 from tabulate import tabulate
 from sklearn.metrics import precision_score, recall_score, f1_score
-
+from .utils import GCS_saver
 
 
 
@@ -134,6 +134,7 @@ class Trainer:
 
         return results
 
+    # TODO change this to save into a GCS BUCKET
     def _save_model(self, model, tokenizer, model_name, save_path, files):
         """
         model - model
@@ -175,6 +176,39 @@ class Trainer:
         return save_path_final
 
 
+    def _save_model_GCS(self, model, tokenizer, model_name, files, bucket_name, dir_path):
+        print('Saving Model...')
+
+        saver = GCS_saver(bucket_name)
+        
+        # generate ID
+        model_id = shortuuid.ShortUUID().random(length=12)
+
+        # change here 
+        blob_name_dir = os.path.join(dir_path, model_id + '|' + model_name)
+
+        
+        # save torch model
+        model_name = model_id + '|' + 'model.bin'
+        blob_name = os.path.join(blob_name_dir, model_name)
+        saver.upload_torch_model(model, blob_name)
+
+        # save tokenizer
+        saver.upload_pretrained_tokenizer(tokenizer, blob_name_dir)
+        
+        # save file in the files
+        for file_name in files:
+            file_name = model_id + '|' + file_name
+            file = json.dumps(files[file_name], ensure_ascii=False, indent=4)
+            blob_name = os.path.join(blob_name_dir, file_name)
+            saver.upload_from_memory(file, blob_name)
+
+
+        print('Model Files Saved.')
+        print()
+
+
+
     def train(self, 
               ModelModule,
               DataModule,
@@ -183,7 +217,8 @@ class Trainer:
                 "val_size": 0.2,
                 "save_metric": f1_score,
                 "threshold": 0,
-                "save_path": None,
+                "gcs_bucket": None,
+                "gcs_blob_dir": None,
                 "save_model_name": " ",
                 "eval_freq": 1,
                 "watch_list": {
@@ -205,7 +240,8 @@ class Trainer:
         
         # unpack variables in config
         watch_list = eval_config['watch_list']
-        save_path = eval_config['save_path']
+        gcs_bucket = eval_config['gcs_bucket']
+        gcs_blob_dir = eval_config['gcs_blob_dir']
         save_metric = eval_config['save_metric']
         eval_freq = eval_config['eval_freq']
         best_val_score = eval_config['threshold']
@@ -393,12 +429,9 @@ class Trainer:
                     # if a save path provided, better models will be checkpointed
                     if val_score > best_val_score: # if f1 score better. save model checkpoint
                         
-                        if save_path:
+                        if gcs_bucket:
                             save_model_name = eval_config['save_model_name']
 
-                            if not os.path.isdir(save_path):
-                                os.mkdir(save_path) # create directory if not exist
-                            
                             
                             model_info = {
                                     'val_score': val_score,
@@ -416,7 +449,7 @@ class Trainer:
                                 
                             }
                             
-                            best_model_path = self._save_model(model, tokenizer, save_model_name, save_path, files )
+                            best_model_path = self._save_model_GCS(model, tokenizer, save_model_name, files, gcs_bucket, gcs_blob_dir)
 
                         best_val_score = val_score # update best f1 score
 
