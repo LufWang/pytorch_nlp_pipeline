@@ -33,10 +33,10 @@ class GCS_saver:
         self.bucket = storage_client.bucket(bucket_name)
 
     
-    def upload_from_memory(self, contents, destination_blob_name):
+    def upload_from_memory(self, contents, destination_blob_name, content_type):
         blob = self.bucket.blob(destination_blob_name)
 
-        blob.upload_from_string(contents)
+        blob.upload_from_string(contents, content_type=content_type)
     
     def upload_from_file(self, source_file_name, destination_blob_name):
         blob = self.bucket.blob(destination_blob_name)
