@@ -451,7 +451,7 @@ class Trainer:
                             }
                             
                             # best_model_path = self._save_model_GCS(model, tokenizer, save_model_name, files, gcs_bucket, gcs_blob_dir)
-                            best_model_path = self._save_model(self, model, tokenizer, save_model_name, save_path, files)
+                            best_model_path = self._save_model(model, tokenizer, save_model_name, save_path, files)
 
                         best_val_score = val_score # update best f1 score
 
