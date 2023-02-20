@@ -242,6 +242,7 @@ class Trainer:
         watch_list = eval_config['watch_list']
         gcs_bucket = eval_config['gcs_bucket']
         gcs_blob_dir = eval_config['gcs_blob_dir']
+        save_path = eval_config['save_path']
         save_metric = eval_config['save_metric']
         eval_freq = eval_config['eval_freq']
         best_val_score = eval_config['threshold']
@@ -429,7 +430,7 @@ class Trainer:
                     # if a save path provided, better models will be checkpointed
                     if val_score > best_val_score: # if f1 score better. save model checkpoint
                         
-                        if gcs_bucket:
+                        if save_path:
                             save_model_name = eval_config['save_model_name']
 
                             
@@ -449,7 +450,8 @@ class Trainer:
                                 
                             }
                             
-                            best_model_path = self._save_model_GCS(model, tokenizer, save_model_name, files, gcs_bucket, gcs_blob_dir)
+                            # best_model_path = self._save_model_GCS(model, tokenizer, save_model_name, files, gcs_bucket, gcs_blob_dir)
+                            best_model_path = self._save_model(self, model, tokenizer, save_model_name, save_path, files)
 
                         best_val_score = val_score # update best f1 score
 
