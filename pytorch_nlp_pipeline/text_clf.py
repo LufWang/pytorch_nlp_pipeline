@@ -153,20 +153,20 @@ class Trainer:
             os.mkdir(save_path) # create directory if not exist
 
         # change here 
-        save_path_final = os.path.join(save_path, model_id + '|' + model_name)
+        save_path_final = os.path.join(save_path, model_id + '-' + model_name)
 
         if not os.path.isdir(save_path_final):
             os.mkdir(save_path_final) # create directory for model if not exist
         
         # save torch model
-        torch.save(model.state_dict(), os.path.join(save_path_final, model_id + '|' + 'model.bin'))  # save model
+        torch.save(model.state_dict(), os.path.join(save_path_final, model_id + '-' + 'model.bin'))  # save model
 
         # save tokenizer
         tokenizer.save_pretrained(save_path_final)
         
         # save file in the files
         for file_name in files:
-            with open(os.path.join(save_path_final, model_id + '|' + file_name), 'w', encoding='utf-8') as f:
+            with open(os.path.join(save_path_final, model_id + '-' + file_name), 'w', encoding='utf-8') as f:
                 json.dump(files[file_name], f, ensure_ascii=False, indent=4)
 
 
