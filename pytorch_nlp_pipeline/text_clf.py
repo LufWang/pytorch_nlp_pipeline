@@ -278,7 +278,7 @@ class Trainer:
             train_true_labels_l = []
             
             # training through the train_data_loader
-            for d in tqdm(train_data_loader):
+            for d in train_data_loader:
                 
                 model.train()
 
@@ -333,7 +333,7 @@ class Trainer:
                     
                     if focused_indexes: # if focused_indexes are passed in (multiclass only)
 
-                        eval_results = self._evaluate_by_metrics(val_trues, val_preds, watch_list, average = None, verbose=False)
+                        eval_results = self._evaluate_by_metrics(val_trues, val_preds, watch_list, average = None)
                         val_score_all = save_metric(val_trues, val_preds, average=None, zero_division=0)
                         
                         # print out scores to console
@@ -356,7 +356,7 @@ class Trainer:
                         val_score = np.mean(val_score_all[focused_indexes])
                     
                     else: # if not focused index or binary
-                        eval_results = self._evaluate_by_metrics(val_trues, val_preds, watch_list, average = average, verbose=True)
+                        eval_results = self._evaluate_by_metrics(val_trues, val_preds, watch_list, average = average)
                         val_score = save_metric(val_trues, val_preds, average = average)
 
                     logging.info(f'{WORKER}: Overall Score: {val_score}')
