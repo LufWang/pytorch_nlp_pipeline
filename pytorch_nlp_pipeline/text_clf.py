@@ -218,7 +218,6 @@ class Trainer:
                 "val_size": 0.2,
                 "focused_indexes": None,
                 "save_metric": f1_score,
-                "threshold": 0,
                 "eval_freq": 1,
                 "watch_list": {
                     "F1": f1_score,
@@ -240,7 +239,7 @@ class Trainer:
         watch_list = eval_config['watch_list']
         save_metric = eval_config['save_metric']
         eval_freq = eval_config['eval_freq']
-        best_val_score = eval_config['threshold']
+        best_val_score = 0
         focused_indexes = eval_config['focused_indexes']
 
 
