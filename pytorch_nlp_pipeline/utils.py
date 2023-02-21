@@ -1,5 +1,5 @@
 import numpy as np
-from google.cloud import storage
+# from google.cloud import storage
 import os
 
 
@@ -69,3 +69,17 @@ class GCS_saver:
 
 
 
+class GCS_reader:
+
+    def __init__(self, bucket_name):
+        storage_client = storage.Client()
+        self.bucket = storage_client.bucket(bucket_name)
+
+    def read_json(self, blob_name):
+        import json
+
+        blob = self.bucket.blob(blob_name)
+
+        with blob.open("r") as f:
+            pass
+            

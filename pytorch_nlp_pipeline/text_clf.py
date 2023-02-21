@@ -24,6 +24,7 @@ class Trainer:
     
     
         self.device = device
+        
 
 
     def _get_loss_pred(self, outputs, labels, loss_fn, threshold, binary):
@@ -134,7 +135,6 @@ class Trainer:
 
         return results
 
-    # TODO change this to save into a GCS BUCKET
     def _save_model(self, model, tokenizer, model_name, save_path, files):
         """
         model - model
@@ -211,15 +211,14 @@ class Trainer:
 
     def train(self, 
               ModelModule,
-              DataModule,
+              TrainDataModule,
+              ValDataModule,
               params,
               eval_config = {
                 "val_size": 0.2,
+                "focused_indexes": None,
                 "save_metric": f1_score,
                 "threshold": 0,
-                "gcs_bucket": None,
-                "gcs_blob_dir": None,
-                "save_model_name": " ",
                 "eval_freq": 1,
                 "watch_list": {
                     "F1": f1_score,
@@ -230,25 +229,22 @@ class Trainer:
               early_stopping = None,
                                 ):
         ## set up data 
-        binary = DataModule.binary
-        labels_to_indexes = DataModule.labels_to_indexes
-        indexes_to_labels = DataModule.indexes_to_labels
-        focused_indexes = DataModule.focused_indexes
-        label_col = DataModule.label_col
+        binary =TrainDataModule.binary
+        labels_to_indexes = TrainDataModule.labels_to_indexes
+        indexes_to_labels = TrainDataModule.indexes_to_labels
+        label_col = TrainDataModule.label_col
         threshold = 0
-        df_train, df_val = DataModule.create_train_val(eval_config['val_size'])
+        df_train = TrainDataModule.df
         
         # unpack variables in config
         watch_list = eval_config['watch_list']
-        gcs_bucket = eval_config['gcs_bucket']
-        gcs_blob_dir = eval_config['gcs_blob_dir']
-        save_path = eval_config['save_path']
         save_metric = eval_config['save_metric']
         eval_freq = eval_config['eval_freq']
         best_val_score = eval_config['threshold']
+        focused_indexes = eval_config['focused_indexes']
 
 
-                # Checking for Binary of Multiclass
+        # Checking for Binary of Multiclass
         if binary: # binary
             RATIO = df_train[df_train[label_col] == 0].shape[0] / df_train[df_train[label_col] == 1].shape[0]
             loss_fn = nn.BCEWithLogitsLoss(
@@ -283,15 +279,15 @@ class Trainer:
         model = ModelModule.load_pretrained(num_classes, self.device)
         model = model.to(self.device)
 
-        train_data_loader = DataModule.create_data_loader(df_train, tokenizer)
-        val_data_loader = DataModule.create_data_loader(df_val, tokenizer)
+        train_data_loader = TrainDataModule.create_data_loader(tokenizer)
+        val_data_loader = ValDataModule.create_data_loader(tokenizer)
 
 
         # get list eval steps based on eval_freq
         epoch_steps = len(train_data_loader)
         total_steps = epoch_steps * params['EPOCHS']
         total_evaluations = eval_freq * params['EPOCHS']
-        print(f'Total Training Steps: {total_steps}')
+        print(f'Total Training Steps: {total_steps}') 
         eval_steps = [int(total_steps/total_evaluations) * i for i in range(1, total_evaluations)]
         eval_steps.append(total_steps)
         print(f'Eval at steps: {eval_steps}')
@@ -311,7 +307,7 @@ class Trainer:
         running_train_loss = 0
         patience_count = 0
         val_scores_list = []
-        best_model_path = None
+        best_model, best_model_info = None, None
 
          # start training
         EPOCHS = params['EPOCHS']
@@ -428,34 +424,25 @@ class Trainer:
                         patience_count += 1
 
                     # if a save path provided, better models will be checkpointed
-                    if val_score > best_val_score: # if f1 score better. save model checkpoint
+                    if val_score > best_val_score: # if f1 score better. save model checkpoint                    
                         
-                        if save_path:
-                            save_model_name = eval_config['save_model_name']
-
-                            
-                            model_info = {
-                                    'val_score': val_score,
-                                    'val_loss': float(np.round(np.mean(val_losses), 4)),
-                                    'time_generated': datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
-                                    'focused_labels':  [indexes_to_labels[x]for x in focused_indexes] if focused_indexes  else [],
-                                    'val_score_by_focused_label': val_score_by_label
-                                }
-                    
-                            files = {
-                                'hyperparameters.json': params,
-                                'model_info.json': model_info,
-                                'labels_to_indexes.json': labels_to_indexes,
-                                'indexes_to_labels.json': indexes_to_labels
-                                
+                        model_info = {
+                                'val_score': val_score,
+                                'val_loss': float(np.round(np.mean(val_losses), 4)),
+                                'time_generated': datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
+                                'focused_labels':  [indexes_to_labels[x]for x in focused_indexes] if focused_indexes  else [],
+                                'val_score_by_focused_label': val_score_by_label,
+                                'eval_results': eval_results,
+                                'epoch': epoch,
+                                'step': global_step
                             }
-                            
-                            # best_model_path = self._save_model_GCS(model, tokenizer, save_model_name, files, gcs_bucket, gcs_blob_dir)
-                            best_model_path = self._save_model(model, tokenizer, save_model_name, save_path, files)
+                
 
+                        best_model = model
+                        best_model_info = model_info
                         best_val_score = val_score # update best f1 score
 
                 global_step += 1 # update training step count 
 
-        return best_val_score, best_model_path
+        return best_model, best_model_info
                     

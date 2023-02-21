@@ -164,7 +164,7 @@ class DataModule:
                     }
 
 
-    def create_data_loader(self, df, tokenizer):
+    def create_data_loader(self, tokenizer):
         """
         Construct data loader, on a torch dataset
         
@@ -180,8 +180,8 @@ class DataModule:
             torch dataloader object
         """
         ds = build_torch_dataset(
-                                texts=df[self.text_col].to_numpy(),
-                                labels=df[self.label_col].to_numpy(),
+                                texts=self.df[self.text_col].to_numpy(),
+                                labels=self.df[self.label_col].to_numpy(),
                                 tokenizer=tokenizer,
                                 max_len=self.max_len
                                 )
@@ -209,7 +209,6 @@ class ClfTrainDataset(DataModule):
                 text_col, 
                 label_col, 
                 labels_to_indexes, 
-                focused_indexes,
                 batch_size,
                 max_len, 
                 random_seed,
@@ -223,24 +222,12 @@ class ClfTrainDataset(DataModule):
         self.labels_to_indexes = labels_to_indexes
         self.indexes_to_labels = {v: k for k, v in zip(labels_to_indexes.keys(), labels_to_indexes.values())}
         self.binary = False
-        self.focused_indexes = focused_indexes
 
 
         if len(labels_to_indexes) == 1:
             self.binary = True
 
 
-
-    def create_train_val(self, val_size): 
-        df_train, df_val = split_data_w_sample(df=self.df, 
-                                               label_col=self.label_col, 
-                                               random_seed=self.random_seed, 
-                                               stratify_col=self.label_col, 
-                                               test_size=val_size,
-                                               sample=self.kwargs.get('sample', None)
-                                                                                )
-        
-        return df_train, df_val
 
         
 
