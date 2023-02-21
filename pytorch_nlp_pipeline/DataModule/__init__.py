@@ -2,6 +2,9 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 import pandas as pd
+import logging
+
+WORKER = '[bold]DATAMODULE[/bold]'
 
 
 
@@ -98,12 +101,11 @@ def split_data_w_sample(df,
     
     
     # data distribution check
-    print('train: {}, val: {}'.format(df_train.shape[0], df_val.shape[0]))
-    print('-' * 20)
-    print('Lowest {} Counts'.format(label_col))
+    logging.info(f'{WORKER}: train: {df_train.shape[0]}, val: {df_val.shape[0]}')
+    logging.info(f'{WORKER}: Lowest {label_col} Counts')
     train_min = df_train[label_col].value_counts().min()
     val_min = df_val[label_col].value_counts().min()
-    print('train: {}. val: {}.'.format(train_min, val_min))
+    logging.info(f'{WORKER}: train: {train_min}. val: {val_min}.')
     
        
     return df_train.sample(frac=1, random_state = random_seed), df_val

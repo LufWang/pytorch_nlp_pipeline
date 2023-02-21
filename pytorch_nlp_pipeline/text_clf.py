@@ -12,8 +12,9 @@ import shortuuid
 from tabulate import tabulate
 from sklearn.metrics import precision_score, recall_score, f1_score
 from .utils import GCS_saver
+import logging
 
-
+WORKER = '[bold cyan]TRAINER[/bold cyan]'
 
 
 class Trainer:
@@ -100,7 +101,7 @@ class Trainer:
         
         return preds_l, preds_probas_l, true_labels_l, losses
 
-    def _evaluate_by_metrics(self, y_true, y_pred, metrics_list, average = 'binary', verbose = True):
+    def _evaluate_by_metrics(self, y_true, y_pred, metrics_list, average = 'binary'):
 
         """
         Helper function that prints out and save a list of metrics defined by the user
@@ -130,51 +131,10 @@ class Trainer:
 
 
         
-        if verbose:
-            print(output_str)
+
+        logging.info(f'{WORKER}: {output_str}')
 
         return results
-
-    def _save_model(self, model, tokenizer, model_name, save_path, files):
-        """
-        model - model
-        tokenizer - tokenizer intialized using transformer
-        model_name - str: name of the saved directory
-        save_path - path
-        files - dict of files with key to be names and values to be files to be saved in the same directory, have to be all json files
-        """
-                        
-        print('Saving Model...')
-        
-        # generate ID
-        model_id = shortuuid.ShortUUID().random(length=12)
-                        
-        if not os.path.isdir(save_path):
-            os.mkdir(save_path) # create directory if not exist
-
-        # change here 
-        save_path_final = os.path.join(save_path, model_id + '-' + model_name)
-
-        if not os.path.isdir(save_path_final):
-            os.mkdir(save_path_final) # create directory for model if not exist
-        
-        # save torch model
-        torch.save(model.state_dict(), os.path.join(save_path_final, model_id + '-' + 'model.bin'))  # save model
-
-        # save tokenizer
-        tokenizer.save_pretrained(save_path_final)
-        
-        # save file in the files
-        for file_name in files:
-            with open(os.path.join(save_path_final, model_id + '-' + file_name), 'w', encoding='utf-8') as f:
-                json.dump(files[file_name], f, ensure_ascii=False, indent=4)
-
-
-        print('Model Files Saved.')
-        print()
-
-        return save_path_final
-
 
     def _save_model_GCS(self, model, tokenizer, model_name, files, bucket_name, dir_path):
         print('Saving Model...')
@@ -285,10 +245,10 @@ class Trainer:
         epoch_steps = len(train_data_loader)
         total_steps = epoch_steps * params['EPOCHS']
         total_evaluations = eval_freq * params['EPOCHS']
-        print(f'Total Training Steps: {total_steps}') 
+        logging.info(f'{WORKER}: Total Training Steps: {total_steps}') 
         eval_steps = [int(total_steps/total_evaluations) * i for i in range(1, total_evaluations)]
         eval_steps.append(total_steps)
-        print(f'Eval at steps: {eval_steps}')
+        logging.info(f'{WORKER}: Eval at steps: {eval_steps}')
 
         optimizer = optim.AdamW(model.parameters(), lr=params['lr'], weight_decay = params['weight_decay']) # optimizer to update weights
         scheduler = get_linear_schedule_with_warmup(
@@ -311,9 +271,7 @@ class Trainer:
         EPOCHS = params['EPOCHS']
         for epoch in range(EPOCHS):
 
-            print(f'Epoch {epoch + 1}/{EPOCHS}')
-            print('-' * 10)
-            print('Training...')
+            logging.info(f'{WORKER}: Epoch {epoch + 1}/{EPOCHS}')
 
             losses = []
             train_preds_l = []
@@ -354,11 +312,9 @@ class Trainer:
 
                 # evaluating based on step
                 if global_step == eval_steps[eval_ind]:
-                    print()
                     eval_ind += 1
                     
-                    print()
-                    print(f'Evaluateing at Step {global_step}....')
+                    logging.info(f'{WORKER}: Evaluateing at Step {global_step}....')
                     val_preds, val_preds_probas, val_trues, val_losses = self._eval_model(
                                                                                             model,
                                                                                             val_data_loader,
@@ -393,9 +349,8 @@ class Trainer:
                             data_all.append(data)
                             val_score_by_label[indexes_to_labels[index]] = round(val_score_all[index], 3)
                         
-                        print()
-                        print(tabulate(data_all, headers=['Label'] + list(eval_results.keys())))
-                        print()
+                        result_table =tabulate(data_all, headers=['Label'] + list(eval_results.keys()))
+                        logging.info(f'{WORKER}: {result_table}')
                             
                             
                         val_score = np.mean(val_score_all[focused_indexes])
@@ -404,8 +359,7 @@ class Trainer:
                         eval_results = self._evaluate_by_metrics(val_trues, val_preds, watch_list, average = average, verbose=True)
                         val_score = save_metric(val_trues, val_preds, average = average)
 
-                    print(f'Overall Score: {val_score}')
-                    print()
+                    logging.info(f'{WORKER}: Overall Score: {val_score}')
 
                     val_scores_list.append(val_score)          
                     val_loss = np.mean(val_losses) # getting average val loss
