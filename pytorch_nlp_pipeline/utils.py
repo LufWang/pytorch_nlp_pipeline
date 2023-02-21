@@ -3,7 +3,7 @@ import numpy as np
 import os
 import shortuuid
 import json
-
+import torch
 
 def get_config(params):
     # random pick a set of params
