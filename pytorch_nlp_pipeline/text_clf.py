@@ -215,7 +215,6 @@ class Trainer:
               ValDataModule,
               params,
               eval_config = {
-                "val_size": 0.2,
                 "focused_indexes": None,
                 "save_metric": f1_score,
                 "eval_freq": 1,
