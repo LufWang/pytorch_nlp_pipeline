@@ -338,7 +338,7 @@ class Trainer:
                         eval_results_im = self._evaluate_by_metrics(val_trues, val_preds, watch_list, average = None)
                         val_score_all = save_metric(val_trues, val_preds, average=None, zero_division=0)
                         
-                        eval_reults = {}
+                        eval_results = {}
                         # Log Score by Focused Indexes
                         for index in focused_indexes:
                             label_name = indexes_to_labels[index]
