@@ -271,7 +271,7 @@ class Trainer:
         EPOCHS = params['EPOCHS']
         for epoch in range(EPOCHS):
 
-            logging.info(f'{WORKER}: Epoch {epoch + 1}/{EPOCHS}')
+            logging.info(f'{WORKER}: Training Epoch {epoch + 1}/{EPOCHS} ...')
 
             losses = []
             train_preds_l = []
