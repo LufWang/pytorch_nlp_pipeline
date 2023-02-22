@@ -32,10 +32,7 @@ def save_model(model, tokenizer, model_name, save_path, files):
         model_name - str: name of the saved directory
         save_path - path
         files - dict of files with key to be names and values to be files to be saved in the same directory, have to be all json files
-        """
-                        
-        print('Saving Model...')
-        
+        """                  
         # generate ID
         model_id = shortuuid.ShortUUID().random(length=12)
                         
@@ -58,10 +55,6 @@ def save_model(model, tokenizer, model_name, save_path, files):
         for file_name in files:
             with open(os.path.join(save_path_final, model_id + '-' + file_name), 'w', encoding='utf-8') as f:
                 json.dump(files[file_name], f, ensure_ascii=False, indent=4)
-
-
-        print('Model Files Saved.')
-        print()
 
 
 class GCS_saver:
