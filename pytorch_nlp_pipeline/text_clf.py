@@ -9,7 +9,6 @@ import os
 from datetime import datetime
 import json
 import shortuuid
-from tabulate import tabulate
 from sklearn.metrics import precision_score, recall_score, f1_score
 from .utils import GCS_saver
 import logging
@@ -315,7 +314,7 @@ class Trainer:
                     STEP_INFO = f'[EPOCH {epoch}][EVAL {eval_ind}]'
                     logging.info(f'{WORKER} {STEP_INFO}: Evaluateing at Step {global_step}....')
 
-
+                    eval_ind += 1
 
                     val_preds, val_preds_probas, val_trues, val_losses = self._eval_model(
                                                                                             model,
