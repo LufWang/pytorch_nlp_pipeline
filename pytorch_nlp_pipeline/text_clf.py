@@ -101,7 +101,7 @@ class Trainer:
         
         return preds_l, preds_probas_l, true_labels_l, losses
 
-    def _evaluate_by_metrics(self, y_true, y_pred, metrics_list, average = 'binary'):
+    def _evaluate_by_metrics(self, y_true, y_pred, metrics_list, average = 'binary', log=False):
 
         """
         Helper function that prints out and save a list of metrics defined by the user
@@ -131,8 +131,8 @@ class Trainer:
 
 
         
-
-        logging.info(f'{WORKER}: {output_str}')
+        if log:
+            logging.info(f'{WORKER} {log}: {output_str}')
 
         return results
 
@@ -312,9 +312,11 @@ class Trainer:
 
                 # evaluating based on step
                 if global_step == eval_steps[eval_ind]:
-                    eval_ind += 1
-                    
-                    logging.info(f'{WORKER}: Evaluateing at Step {global_step}....')
+                    STEP_INFO = f'[EPOCH {epoch}][EVAL {eval_ind}]'
+                    logging.info(f'{WORKER} {STEP_INFO}: Evaluateing at Step {global_step}....')
+
+
+
                     val_preds, val_preds_probas, val_trues, val_losses = self._eval_model(
                                                                                             model,
                                                                                             val_data_loader,
@@ -333,37 +335,39 @@ class Trainer:
                     
                     if focused_indexes: # if focused_indexes are passed in (multiclass only)
 
-                        eval_results = self._evaluate_by_metrics(val_trues, val_preds, watch_list, average = None)
+                        eval_results_im = self._evaluate_by_metrics(val_trues, val_preds, watch_list, average = None)
                         val_score_all = save_metric(val_trues, val_preds, average=None, zero_division=0)
                         
-                        # print out scores to console
-                        data_all = []
+                        eval_reults = {}
+                        # Log Score by Focused Indexes
                         for index in focused_indexes:
-                            data = []
                             label_name = indexes_to_labels[index]
-                            data.append(label_name)
-                            for metric_name in eval_results:
-                                score = round(eval_results[metric_name][index], 3)
-                                data.append(score)
+                            output_str = f'{label_name}     '
+                            scores = {}
+                            for metric_name in eval_results_im:
+                                score = round(eval_results_im[metric_name][index], 3)
+                                output_str += f'{metric_name}: {score}    '
+                                scores[metric_name] = score
                             
-                            data_all.append(data)
+                            eval_results[label_name] = scores
+                                
+                            
                             val_score_by_label[indexes_to_labels[index]] = round(val_score_all[index], 3)
                         
-                        result_table =tabulate(data_all, headers=['Label'] + list(eval_results.keys()))
-                        logging.info(f'{WORKER}: {result_table}')
+                            logging.info(f'{WORKER} {STEP_INFO}: {output_str}')
                             
                             
                         val_score = np.mean(val_score_all[focused_indexes])
                     
                     else: # if not focused index or binary
-                        eval_results = self._evaluate_by_metrics(val_trues, val_preds, watch_list, average = average)
+                        eval_results = self._evaluate_by_metrics(val_trues, val_preds, watch_list, average = average, log = STEP_INFO)
                         val_score = save_metric(val_trues, val_preds, average = average)
-
-                    logging.info(f'{WORKER}: Overall Score: {val_score}')
 
                     val_scores_list.append(val_score)          
                     val_loss = np.mean(val_losses) # getting average val loss
                     val_losses_list.append(val_loss)
+
+                    logging.info(f'{WORKER} {STEP_INFO}:End of Eval - Val Save Metric Score: {val_score}   Val Loss: {val_loss}')
 
                     # check if needed to be early stopped: 
                     if early_stopping:
@@ -393,6 +397,8 @@ class Trainer:
                         best_model = model
                         best_model_info = model_info
                         best_val_score = val_score # update best f1 score
+
+                        logging.info(f'{WORKER} {STEP_INFO}:End of Eval - Better Val Score, Updated Checkpoint Model...')
 
                 global_step += 1 # update training step count 
 
