@@ -331,7 +331,7 @@ class Trainer:
                     else:
                         average = 'macro'
 
-                    
+                     
                     if focused_indexes: # if focused_indexes are passed in (multiclass only)
 
                         eval_results_im = self._evaluate_by_metrics(val_trues, val_preds, watch_list, average = None)
@@ -366,7 +366,7 @@ class Trainer:
                     val_loss = np.mean(val_losses) # getting average val loss
                     val_losses_list.append(val_loss)
 
-                    logging.info(f'{WORKER} {STEP_INFO}:End of Eval - Val Save Metric Score: {val_score}   Val Loss: {val_loss}')
+                    logging.info(f'{WORKER} {STEP_INFO}: End of Eval - Val Save Metric Score: {round(val_score, 3)}   Val Loss: {round(val_loss, 4)}')
 
                     # check if needed to be early stopped: 
                     if early_stopping:
@@ -397,7 +397,7 @@ class Trainer:
                         best_model_info = model_info
                         best_val_score = val_score # update best f1 score
 
-                        logging.info(f'{WORKER} {STEP_INFO}:End of Eval - Better Val Score, Updated Checkpoint Model...')
+                        logging.info(f'{WORKER} {STEP_INFO}: End of Eval - Better Val Score, Updated Checkpoint Model...')
 
                 global_step += 1 # update training step count 
 

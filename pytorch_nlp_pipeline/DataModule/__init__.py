@@ -204,7 +204,7 @@ class DataModule:
     
 
 
-class ClfTrainDataset(DataModule):
+class ClfDataset(DataModule):
 
     def __init__(self, 
                 df,
