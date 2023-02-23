@@ -104,6 +104,41 @@ class BioGPTWithCLFHead(nn.Module):
         return outputs
 
 
+class BERTWithCLFHead(nn.Module):
+    """
+    Neural Network Structure
+    
+    """
+    
+    def __init__(self, pretrained_path, CLFHead, n_classes, device, freeze = True):
+        super(BERTWithCLFHead, self).__init__()
+        
+        bert = BertModel.from_pretrained(pretrained_path)
+        if freeze:
+            for param in bert.parameters():
+                param.requires_grad = False
+        
+        self.bert = bert
+        
+        
+        self.drop = nn.Dropout(p=0.3)
+        self.n_classes = n_classes
+        self.device = device
+        self.CLFHead = CLFHead(self.bert.config.hidden_size, 384, n_classes, device)
+        
+    def forward(self, input_ids, attention_mask):
+  
+        outputs  = self.bert(input_ids = input_ids, 
+                                      attention_mask = attention_mask)
+        outputs = self.drop(outputs[1]).to(self.device)
+
+        outputs = self.CLFHead(outputs)
+        
+        
+        return outputs
+
+
+# TODO A more general class?
 class ModelModule:
 
     def __init__(self):
@@ -114,17 +149,15 @@ class ModelModule:
         pass
 
 
-###
-# TODO should be able to load different kinds of pretrained models
-###
+
 class BertModule:
     def __init__(self, pretrained_path):
         self.pretrained_path = pretrained_path
         self.tokenizer = BertTokenizer.from_pretrained(pretrained_path)
 
 
-    def load_pretrained(self, n_classes, device):
-        return CustomBertMultiClassifier(self.pretrained_path, n_classes, device)
+    def load_pretrained(self, n_classes, device, freeze=True):
+        return BERTWithCLFHead(self.pretrained_path, ClassifierHead,n_classes, device, freeze)
 
 
 
@@ -135,7 +168,7 @@ class BioGPTModule:
 
 
 
-    def load_pretrained(self, n_classes, device):
-        return BioGPTWithCLFHead(self.pretrained_path, ClassifierHead,n_classes, device, freeze=True)
+    def load_pretrained(self, n_classes, device, freeze=True):
+        return BioGPTWithCLFHead(self.pretrained_path, ClassifierHead,n_classes, device, freeze)
 
 
