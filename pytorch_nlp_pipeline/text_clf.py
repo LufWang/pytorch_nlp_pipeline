@@ -280,7 +280,7 @@ class Trainer:
             
             # training through the train_data_loader
             progress = Progress(SpinnerColumn(spinner_name='line'), 
-                            TextColumn("Processing weeks data"),
+                            TextColumn("Training ..."),
                             '(',
                             MofNCompleteColumn(),
                             ')',
@@ -413,7 +413,8 @@ class Trainer:
                             logging.info(f'{WORKER} {STEP_INFO}: End of Eval - Better Val Score, Updated Checkpoint Model...')
 
                     global_step += 1 # update training step count 
-                progress.advance(task)
+                
+                    progress.advance(task)
         
         return best_model, best_model_info
                     
