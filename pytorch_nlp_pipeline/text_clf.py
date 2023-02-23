@@ -12,6 +12,8 @@ import shortuuid
 from sklearn.metrics import precision_score, recall_score, f1_score
 from .utils import GCS_saver
 import logging
+from rich.progress import Progress, SpinnerColumn, TextColumn, MofNCompleteColumn, BarColumn, TimeElapsedColumn, TimeRemainingColumn
+
 
 WORKER = '[bold cyan]TRAINER[/bold cyan]'
 
@@ -277,129 +279,141 @@ class Trainer:
             train_true_labels_l = []
             
             # training through the train_data_loader
-            for d in train_data_loader:
-                
-                model.train()
+            progress = Progress(SpinnerColumn(spinner_name='line'), 
+                            TextColumn("Processing weeks data"),
+                            '(',
+                            MofNCompleteColumn(),
+                            ')',
+                            TimeElapsedColumn(),
+                            BarColumn(),
+                            TimeRemainingColumn(),
+                            transient=True)
+            with progress:
+                task = progress.add_task("Training ...", total=len(train_data_loader))
+                for d in train_data_loader:
+                    
+                    model.train()
 
-                input_ids = d["input_ids"].to(self.device)
-                attention_mask = d["attention_mask"].to(self.device)
-                labels = d["labels"].to(self.device) 
+                    input_ids = d["input_ids"].to(self.device)
+                    attention_mask = d["attention_mask"].to(self.device)
+                    labels = d["labels"].to(self.device) 
 
-                # getting output on current weights
-                outputs = model(
-                                input_ids=input_ids,
-                                attention_mask=attention_mask
-                            )
-
-
-                # getting loss and preds for the current batch
-                loss, preds, preds_proba, preds_proba_all = self._get_loss_pred(outputs, labels, loss_fn, threshold, binary)
-
-                # backprogogate and update weights/biases
-                losses.append(loss.item())
-                loss.backward()
-                nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
-                optimizer.step()
-                scheduler.step()
-                optimizer.zero_grad()
+                    # getting output on current weights
+                    outputs = model(
+                                    input_ids=input_ids,
+                                    attention_mask=attention_mask
+                                )
 
 
-                # record performance
-                running_train_loss += loss.item() # update running train loss
-                train_preds_l.extend(preds.tolist())
-                train_true_labels_l.extend(labels.tolist())
+                    # getting loss and preds for the current batch
+                    loss, preds, preds_proba, preds_proba_all = self._get_loss_pred(outputs, labels, loss_fn, threshold, binary)
 
-                # evaluating based on step
-                if global_step == eval_steps[eval_ind]:
-                    STEP_INFO = f'[EPOCH {epoch}][EVAL {eval_ind}]'
-                    logging.info(f'{WORKER} {STEP_INFO}: Evaluateing at Step {global_step}....')
+                    # backprogogate and update weights/biases
+                    losses.append(loss.item())
+                    loss.backward()
+                    nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                    optimizer.step()
+                    scheduler.step()
+                    optimizer.zero_grad()
 
-                    eval_ind += 1
 
-                    val_preds, val_preds_probas, val_trues, val_losses = self._eval_model(
-                                                                                            model,
-                                                                                            val_data_loader,
-                                                                                            loss_fn,
-                                                                                            self.device,
-                                                                                            threshold,
-                                                                                            binary
-                                                                                                    )
-                    val_score_by_label = {}
+                    # record performance
+                    running_train_loss += loss.item() # update running train loss
+                    train_preds_l.extend(preds.tolist())
+                    train_true_labels_l.extend(labels.tolist())
 
-                    if binary:
-                        average = 'binary'
-                    else:
-                        average = 'macro'
+                    # evaluating based on step
+                    if global_step == eval_steps[eval_ind]:
+                        STEP_INFO = f'[EPOCH {epoch}][EVAL {eval_ind}]'
+                        logging.info(f'{WORKER} {STEP_INFO}: Evaluateing at Step {global_step}....')
 
-                     
-                    if focused_indexes: # if focused_indexes are passed in (multiclass only)
+                        eval_ind += 1
 
-                        eval_results_im = self._evaluate_by_metrics(val_trues, val_preds, watch_list, average = None)
-                        val_score_all = save_metric(val_trues, val_preds, average=None, zero_division=0)
+                        val_preds, val_preds_probas, val_trues, val_losses = self._eval_model(
+                                                                                                model,
+                                                                                                val_data_loader,
+                                                                                                loss_fn,
+                                                                                                self.device,
+                                                                                                threshold,
+                                                                                                binary
+                                                                                                        )
+                        val_score_by_label = {}
+
+                        if binary:
+                            average = 'binary'
+                        else:
+                            average = 'macro'
+
                         
-                        eval_results = {}
-                        # Log Score by Focused Indexes
-                        for index in focused_indexes:
-                            label_name = indexes_to_labels[index]
-                            output_str = f'{label_name}     '
-                            scores = {}
-                            for metric_name in eval_results_im:
-                                score = round(eval_results_im[metric_name][index], 3)
-                                output_str += f'{metric_name}: {score}    '
-                                scores[metric_name] = score
+                        if focused_indexes: # if focused_indexes are passed in (multiclass only)
+
+                            eval_results_im = self._evaluate_by_metrics(val_trues, val_preds, watch_list, average = None)
+                            val_score_all = save_metric(val_trues, val_preds, average=None, zero_division=0)
                             
-                            eval_results[label_name] = scores
+                            eval_results = {}
+                            # Log Score by Focused Indexes
+                            for index in focused_indexes:
+                                label_name = indexes_to_labels[index]
+                                output_str = f'{label_name}     '
+                                scores = {}
+                                for metric_name in eval_results_im:
+                                    score = round(eval_results_im[metric_name][index], 3)
+                                    output_str += f'{metric_name}: {score}    '
+                                    scores[metric_name] = score
                                 
+                                eval_results[label_name] = scores
+                                    
+                                
+                                val_score_by_label[indexes_to_labels[index]] = round(val_score_all[index], 3)
                             
-                            val_score_by_label[indexes_to_labels[index]] = round(val_score_all[index], 3)
+                                logging.info(f'{WORKER} {STEP_INFO}: {output_str}')
+                                
+                                
+                            val_score = np.mean(val_score_all[focused_indexes])
                         
-                            logging.info(f'{WORKER} {STEP_INFO}: {output_str}')
-                            
-                            
-                        val_score = np.mean(val_score_all[focused_indexes])
-                    
-                    else: # if not focused index or binary
-                        eval_results = self._evaluate_by_metrics(val_trues, val_preds, watch_list, average = average, log = STEP_INFO)
-                        val_score = save_metric(val_trues, val_preds, average = average)
+                        else: # if not focused index or binary
+                            eval_results = self._evaluate_by_metrics(val_trues, val_preds, watch_list, average = average, log = STEP_INFO)
+                            val_score = save_metric(val_trues, val_preds, average = average)
 
-                    val_scores_list.append(val_score)          
-                    val_loss = np.mean(val_losses) # getting average val loss
-                    val_losses_list.append(val_loss)
+                        val_scores_list.append(val_score)          
+                        val_loss = np.mean(val_losses) # getting average val loss
+                        val_losses_list.append(val_loss)
 
-                    logging.info(f'{WORKER} {STEP_INFO}: End of Eval - Val Save Metric Score: {round(val_score, 3)}   Val Loss: {round(val_loss, 4)}')
+                        logging.info(f'{WORKER} {STEP_INFO}: End of Eval - Val Save Metric Score: {round(val_score, 3)}   Val Loss: {round(val_loss, 4)}')
 
-                    # check if needed to be early stopped: 
-                    if early_stopping:
-                        if patience_count > early_stopping:
-                            if val_scores_list[-1] > val_scores_list[-(early_stopping + 1)]:
-                                print('Early Stopping..')
-                                print('Val F1 List: ', val_scores_list)
-                                return None, None
-                    
-                        patience_count += 1
-
-                    # if a save path provided, better models will be checkpointed
-                    if val_score > best_val_score: # if f1 score better. save model checkpoint                    
+                        # check if needed to be early stopped: 
+                        if early_stopping:
+                            if patience_count > early_stopping:
+                                if val_scores_list[-1] > val_scores_list[-(early_stopping + 1)]:
+                                    print('Early Stopping..')
+                                    print('Val F1 List: ', val_scores_list)
+                                    return None, None
                         
-                        model_info = {
-                                'val_score': val_score,
-                                'val_loss': float(np.round(np.mean(val_losses), 4)),
-                                'time_generated': datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
-                                'focused_labels':  [indexes_to_labels[x]for x in focused_indexes] if focused_indexes  else [],
-                                'val_score_by_focused_label': val_score_by_label,
-                                'eval_results': eval_results,
-                                'epoch': epoch,
-                                'step': global_step
-                            }
-                
+                            patience_count += 1
 
-                        best_model = model
-                        best_model_info = model_info
-                        best_val_score = val_score # update best f1 score
+                        # if a save path provided, better models will be checkpointed
+                        if val_score > best_val_score: # if f1 score better. save model checkpoint                    
+                            
+                            model_info = {
+                                    'val_score': val_score,
+                                    'val_loss': float(np.round(np.mean(val_losses), 4)),
+                                    'time_generated': datetime.now().strftime("%m/%d/%Y, %H:%M:%S"),
+                                    'focused_labels':  [indexes_to_labels[x]for x in focused_indexes] if focused_indexes  else [],
+                                    'val_score_by_focused_label': val_score_by_label,
+                                    'eval_results': eval_results,
+                                    'epoch': epoch,
+                                    'step': global_step
+                                }
+                    
 
-                        logging.info(f'{WORKER} {STEP_INFO}: End of Eval - Better Val Score, Updated Checkpoint Model...')
+                            best_model = model
+                            best_model_info = model_info
+                            best_val_score = val_score # update best f1 score
 
-                global_step += 1 # update training step count 
+                            logging.info(f'{WORKER} {STEP_INFO}: End of Eval - Better Val Score, Updated Checkpoint Model...')
 
+                    global_step += 1 # update training step count 
+                progress.advance(task)
+        
         return best_model, best_model_info
                     
