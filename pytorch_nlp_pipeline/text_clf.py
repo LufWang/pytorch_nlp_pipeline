@@ -342,7 +342,7 @@ class Trainer:
                         if binary:
                             average = 'binary'
                         else:
-                            average = 'macro'
+                            average = 'weighted'
 
                         
                         if focused_indexes: # if focused_indexes are passed in (multiclass only)

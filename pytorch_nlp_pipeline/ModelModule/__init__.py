@@ -107,7 +107,6 @@ class BioGPTWithCLFHead(nn.Module):
 class BERTWithCLFHead(nn.Module):
     """
     Neural Network Structure
-    
     """
     
     def __init__(self, pretrained_path, CLFHead, n_classes, device, freeze = True):
