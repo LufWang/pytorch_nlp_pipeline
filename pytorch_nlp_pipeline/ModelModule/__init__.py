@@ -154,14 +154,17 @@ class BertModule:
         self.pretrained_path = pretrained_path
         self.tokenizer = BertTokenizer.from_pretrained(pretrained_path)
         self.freeze_pretrained = freeze_pretrained
+        self.model = None
 
 
-    def load_pretrained(self, n_classes, device):
-        return BERTWithCLFHead(self.pretrained_path, 
-                               ClassifierHead,
-                               n_classes, 
-                               device, 
-                               self.freeze_pretrained)
+    def load_weights(self, n_classes, device):
+        self.model = BERTWithCLFHead(self.pretrained_path, 
+                                    ClassifierHead,
+                                    n_classes, 
+                                    device, 
+                                    self.freeze_pretrained)
+
+
 
 
 
@@ -174,7 +177,7 @@ class BioGPTModule:
 
 
 
-    def load_pretrained(self, n_classes, device):
+    def load_weights(self, n_classes, device):
         return BioGPTWithCLFHead(self.pretrained_path, 
                                  ClassifierHead,
                                  n_classes, 

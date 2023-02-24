@@ -44,7 +44,6 @@ class Trainer:
             preds: list of predicted labels
             
         """
-        m = nn.Softmax(dim=1)
         
         if binary: # if doing binary classification
             outputs = outputs.squeeze()
@@ -235,7 +234,8 @@ class Trainer:
 
         # load tokenizer and model
         tokenizer = ModelModule.tokenizer 
-        model = ModelModule.load_pretrained(num_classes, self.device)
+        ModelModule.load_weights(num_classes, self.device)
+        model = ModelModule.model
         model = model.to(self.device)
 
         train_data_loader = TrainDataModule.create_data_loader(tokenizer)
@@ -417,4 +417,74 @@ class Trainer:
                     progress.advance(task)
         
         return best_model, best_model_info
-                    
+
+
+
+class Evaluator:
+
+    def __init__(self, ModelModule, device):
+
+        self.ModelModule = ModelModule
+        self.device = device
+    
+
+    def eval_model_detailed(self, data_loader, device, binary = True):
+        
+        model =  self.ModelModule.model
+        model.eval()
+        print('generating detailed evaluation..')
+        
+        texts_l = []
+        preds_l = []
+        preds_probas_l = []
+        true_labels_l = []
+        preds_probas_all_l = []
+        
+        with torch.no_grad():
+            for d in data_loader:
+                texts = d['text']
+                input_ids = d["input_ids"].to(device)
+                attention_mask = d["attention_mask"].to(device)
+                labels = d["labels"].to(device)
+
+                outputs = model(
+                                input_ids=input_ids,
+                                attention_mask=attention_mask
+                                )
+    
+                if binary: # if doing binary classification
+                    threshold = 0.5
+                    outputs = outputs.squeeze()
+                    preds_proba = np.array(torch.sigmoid(outputs).tolist()) # add sigmoid since no sigmoid in NN
+                    preds = np.where(preds_proba > threshold, 1, 0)
+                    preds_probas_all = [1-preds_proba, preds_proba]
+                                            
+                else: # if doing multiclass 
+                    m = nn.Softmax(dim=1)
+                    preds_proba, preds = torch.max(m(outputs), dim=1)
+                    preds_probas_all =m(outputs).cpu().tolist()
+        
+                
+                texts_l.extend(texts)
+                preds_l.extend(preds.tolist())
+                preds_probas_l.extend(preds_proba.tolist())
+                true_labels_l.extend(labels.tolist())
+                preds_probas_all_l.extend(preds_probas_all)
+                
+        
+        return texts_l, preds_l, preds_probas_l, true_labels_l, preds_probas_all_l
+    
+
+    def predict_cohord(self, DataModule):
+
+        tokenizer = self.ModelModule.tokenizer
+
+        dataloader = DataModule.create_data_loader(tokenizer)
+
+        texts_l, preds_l, preds_probas_l, true_labels_l, preds_probas_all_l = self.eval_model_detailed(dataloader, 
+                                                                                                       self.device, 
+                                                                                                       binary = DataModule.binary)
+        
+        return texts_l, preds_l, preds_probas_l, true_labels_l, preds_probas_all_l
+
+
