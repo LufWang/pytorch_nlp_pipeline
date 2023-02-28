@@ -55,6 +55,7 @@ class CustomBioGPTMultiClassifier(nn.Module):
         
         return outputs
 
+
 class ClassifierHead(nn.Module):
 
     def __init__(self, input_size, hidden_size, num_classes, device):
@@ -157,7 +158,7 @@ class BertModule:
         self.model = None
 
 
-    def load_weights(self, n_classes, device):
+    def initialize_model(self, n_classes, device):
         self.model = BERTWithCLFHead(self.pretrained_path, 
                                     ClassifierHead,
                                     n_classes, 
@@ -173,12 +174,12 @@ class BioGPTModule:
         self.pretrained_path = pretrained_path
         self.tokenizer = BioGptTokenizer.from_pretrained(pretrained_path)
         self.freeze_pretrained = freeze_pretrained
+        self.model = None
 
 
 
-
-    def load_weights(self, n_classes, device):
-        return BioGPTWithCLFHead(self.pretrained_path, 
+    def initialize_model(self, n_classes, device):
+        self.model = BioGPTWithCLFHead(self.pretrained_path, 
                                  ClassifierHead,
                                  n_classes, 
                                  device, 

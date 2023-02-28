@@ -177,6 +177,7 @@ class Trainer:
               eval_config = {
                 "focused_indexes": None,
                 "save_metric": f1_score,
+                "multiclass_average": "weighted",
                 "eval_freq": 1,
                 "watch_list": {
                     "F1": f1_score,
@@ -197,6 +198,7 @@ class Trainer:
         # unpack variables in config
         watch_list = eval_config['watch_list']
         save_metric = eval_config['save_metric']
+        multiclass_average = eval_config['multiclass_average']
         eval_freq = eval_config['eval_freq']
         best_val_score = 0
         focused_indexes = eval_config['focused_indexes']
@@ -234,7 +236,7 @@ class Trainer:
 
         # load tokenizer and model
         tokenizer = ModelModule.tokenizer 
-        ModelModule.load_weights(num_classes, self.device)
+        ModelModule.initialize_model(num_classes, self.device)
         model = ModelModule.model
         model = model.to(self.device)
 
@@ -342,7 +344,7 @@ class Trainer:
                         if binary:
                             average = 'binary'
                         else:
-                            average = 'weighted'
+                            average = multiclass_average
 
                         
                         if focused_indexes: # if focused_indexes are passed in (multiclass only)
@@ -475,7 +477,7 @@ class Evaluator:
         return texts_l, preds_l, preds_probas_l, true_labels_l, preds_probas_all_l
     
 
-    def predict_cohord(self, DataModule):
+    def predict_cohort(self, DataModule):
 
         tokenizer = self.ModelModule.tokenizer
 
