@@ -1,0 +1,10 @@
+Metadata-Version: 2.1
+Name: pytorch-nlp-pipeline
+Version: 0.0.1
+Summary: abstracted ML pipelines based on pytorch
+Author: Lufei Wang
+Author-email: wang.lufei@mayo.edu
+Requires-Python: >=3.9
+License-File: LICENSE.txt
+
+abstracted ML pipelines based on pytorch - mainly for text classification
