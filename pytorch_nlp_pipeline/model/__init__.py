@@ -27,6 +27,7 @@ class ModelHead(nn.Module):
 class PytorchNlpModel(nn.Module):
     def __init__(self, pretrained_type, pretrained_path, device, n_classes, freeze_pretrained=True, head_hidden_size=512):
         logging.info(f'{WORKER}: PytorchNlpModel initiating...')
+        super(PytorchNlpModel, self).__init__()
         self.pretrained_type = pretrained_type
         if pretrained_type == 'BERT':
             self.tokenizer = BertTokenizer.from_pretrained(pretrained_path)

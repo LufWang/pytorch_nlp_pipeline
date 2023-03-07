@@ -165,7 +165,13 @@ class Trainer:
 
         # load tokenizer and model
         tokenizer = ModelModule.tokenizer 
-        model = ModelModule     ##TODO: may need to debug
+
+        # enable multiple GPU training
+        model = ModelModule
+        if self.device == 'gpu':
+            num_gpus = torch.cuda.device_count()
+            logging.info(f'{WORKER}: Detected {num_gpus} GPUs, utilizing all for training...')
+            model = nn.DataParallel(model, device_ids = list(range(num_gpus)))    ##multiple GPU Training
         model = model.to(self.device)
 
         train_data_loader = TrainDataModule.create_data_loader(tokenizer)

@@ -1,4 +1,4 @@
-from core import DatasetBase
+from .core import DatasetBase
 import logging
 
 WORKER = '[bold]DATAMODULE[/bold]'

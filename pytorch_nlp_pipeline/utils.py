@@ -44,10 +44,11 @@ def save_model(model, tokenizer, model_name, save_path, files, save_mode=None):
         torch.save(model.state_dict(), os.path.join(save_path_final, model_id + '-' + 'model.bin'))  # save model
     elif save_mode == 'body-only':
         # only save embedding part
-        pass
+        #TODO might need debug - might need to create the dir
+        model.pretrained.save_pretrained(os.path.join(save_path_final, model_id + '-' + 'embeddings'))
     elif save_mode == 'head-only':
         # only save head
-        pass
+        torch.save(model.head.state_dict(), os.path.join(save_path_final, model_id + '-' + 'model.bin'))
 
     # save tokenizer
     tokenizer.save_pretrained(save_path_final)
