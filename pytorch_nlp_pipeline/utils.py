@@ -45,10 +45,16 @@ def save_model(model, tokenizer, model_name, save_path, files, save_mode=None):
     elif save_mode == 'body-only':
         # only save embedding part
         #TODO might need debug - might need to create the dir
-        model.pretrained.save_pretrained(os.path.join(save_path_final, model_id + '-' + 'embeddings'))
+        if type(model) == torch.nn.DataParallel:
+            model.module.pretrained.save_pretrained(save_path_final)
+        else:
+            model.pretrained.save_pretrained(save_path_final)
     elif save_mode == 'head-only':
         # only save head
-        torch.save(model.head.state_dict(), os.path.join(save_path_final, model_id + '-' + 'model.bin'))
+        if type(model) == torch.nn.DataParallel:
+            torch.save(model.module.head.state_dict(), os.path.join(save_path_final, model_id + '-' + 'model.bin'))
+        else:
+            torch.save(model.head.state_dict(), os.path.join(save_path_final, model_id + '-' + 'model.bin'))
 
     # save tokenizer
     tokenizer.save_pretrained(save_path_final)
