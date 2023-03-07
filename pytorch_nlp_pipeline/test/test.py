@@ -2,8 +2,8 @@ import sys
 # sys.path.insert(0, '/Users/M255032/lufei-wang-local/piplelines/nlp_pipelines/pytorch_nlp_pipeline')
 import pandas as pd
 from pytorch_nlp_pipeline import model
-from pytorch_nlp_pipeline.data import ClfTrainDataset
-from pytorch_nlp_pipeline.text_clf import Trainer
+from pytorch_nlp_pipeline.dataset import ClfTrainDataset
+from pytorch_nlp_pipeline.classification import Trainer
 import random
 
 

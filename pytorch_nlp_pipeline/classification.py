@@ -3,32 +3,20 @@ import torch
 import numpy as np
 import pandas as pd
 from torch import nn, optim
-
-from tqdm.auto import tqdm
-import os 
 from datetime import datetime
-import json
-import shortuuid
 from sklearn.metrics import precision_score, recall_score, f1_score
-from .utils import GCS_saver
 import logging
 from rich.progress import Progress, SpinnerColumn, TextColumn, MofNCompleteColumn, BarColumn, TimeElapsedColumn, TimeRemainingColumn
 
 
 WORKER = '[bold cyan]TRAINER[/bold cyan]'
 
-
 class Trainer:
-
     def __init__(self, 
                  device
                  ):
-    
-    
         self.device = device
         
-
-
     def _get_loss_pred(self, outputs, labels, loss_fn, threshold, binary):
         """
         get loss and prediction from output of NN
@@ -44,32 +32,25 @@ class Trainer:
             preds: list of predicted labels
             
         """
-        
         if binary: # if doing binary classification
             outputs = outputs.squeeze()
             loss = loss_fn(outputs, labels)
             preds_proba = np.array(torch.sigmoid(outputs).tolist()) # add sigmoid since no sigmoid in NN
             preds = np.where(preds_proba > threshold, 1, 0)
-            
             return loss, preds, preds_proba, [1-preds_proba, preds_proba]
-                
         else: # if doing multiclass 
             m = nn.Softmax(dim=1)
             loss = loss_fn(outputs, labels.long())
             # _, preds = torch.max(outputs, dim=1)
             preds_proba, preds = torch.max(m(outputs), dim=1)
-        
-        
             return loss, preds, preds_proba, m(outputs)
 
     def _eval_model(self, model, data_loader, loss_fn, device, threshold = 0.5, binary = True):
-
         model.eval()
         losses = []
         preds_l = []
         preds_probas_l = []
         true_labels_l = []
-        
         with torch.no_grad():
             for d in data_loader:
                 input_ids = d["input_ids"].to(device)
@@ -82,11 +63,8 @@ class Trainer:
                                 attention_mask=attention_mask
                                 )
 
-                
                 loss, preds, preds_probas, preds_probas_all = self._get_loss_pred(outputs, labels, loss_fn, threshold, binary)
-                
-
-
+            
                 preds_l.extend(preds.tolist())
                 true_labels_l.extend(labels.tolist())
                 preds_probas_l.extend(preds_probas.tolist())
@@ -97,8 +75,6 @@ class Trainer:
         true_labels_l = np.array(true_labels_l)
         preds_probas_l = np.array(preds_probas_l)
         
-        
-        
         return preds_l, preds_probas_l, true_labels_l, losses
 
     def _evaluate_by_metrics(self, y_true, y_pred, metrics_list, average = 'binary', log=False):
@@ -106,7 +82,6 @@ class Trainer:
         """
         Helper function that prints out and save a list of metrics defined by the user
         """
-
         results = {}
         output_str = ''
 
@@ -117,57 +92,18 @@ class Trainer:
                 score = metric_func(y_true, y_pred)
                 score = score.tolist()
                 output_str += f'| {metric_name}: {score} '
-
                 results[metric_name] = score
-
             else:
                 score = metric_func(y_true, y_pred, average=average, zero_division=0)
                 results[metric_name] = score
-                
+
                 if type(score) == float:
                     score = round(score, 4)
 
                 output_str += f'| {metric_name}: {score} '
-
-
-        
         if log:
             logging.info(f'{WORKER} {log}: {output_str}')
-
         return results
-
-    def _save_model_GCS(self, model, tokenizer, model_name, files, bucket_name, dir_path):
-        print('Saving Model...')
-
-        saver = GCS_saver(bucket_name)
-        
-        # generate ID
-        model_id = shortuuid.ShortUUID().random(length=12)
-
-        # change here 
-        blob_name_dir = os.path.join(dir_path, model_id + '-' + model_name)
-
-        
-        # save torch model
-        model_name = model_id + '-' + 'model.bin'
-        blob_name = os.path.join(blob_name_dir, model_name)
-        saver.upload_torch_model(model, blob_name)
-
-        # save tokenizer
-        saver.upload_pretrained_tokenizer(tokenizer, blob_name_dir)
-        
-        # save file in the files
-        for file_name in files:
-            file = json.dumps(files[file_name], ensure_ascii=False, indent=4)
-            file_name = model_id + '-' + file_name
-            blob_name = os.path.join(blob_name_dir, file_name)
-            saver.upload_from_memory(file, blob_name, content_type='application/json')
-
-
-        print('Model Files Saved.')
-        print()
-
-
 
     def train(self, 
               ModelModule,
@@ -203,8 +139,7 @@ class Trainer:
         best_val_score = 0
         focused_indexes = eval_config['focused_indexes']
 
-
-        # Checking for Binary of Multiclass
+        # Checking for Binary or Multiclass
         if binary: # binary
             RATIO = df_train[df_train[label_col] == 0].shape[0] / df_train[df_train[label_col] == 1].shape[0]
             loss_fn = nn.BCEWithLogitsLoss(
@@ -213,9 +148,7 @@ class Trainer:
             focused_indexes = None
             threshold = 0.5
             num_classes = 1
-        
         else: # multiclassfication
-
             ## Assign class weights
             class_weight = [] 
             sample = df_train[label_col].value_counts().to_dict()
@@ -225,24 +158,18 @@ class Trainer:
             if focused_indexes: # if focused index boost their weights 
                 for index in focused_indexes:
                     class_weight[index] = class_weight[index] * float(params.get('boost', 1))
-        
             loss_fn = nn.CrossEntropyLoss(
                                                 weight = torch.tensor(class_weight).to(self.device)
                                                 ).to(self.device)
-
             num_classes = len(labels_to_indexes)
-
-        
 
         # load tokenizer and model
         tokenizer = ModelModule.tokenizer 
-        ModelModule.initialize_model(num_classes, self.device)
-        model = ModelModule.model
+        model = ModelModule     ##TODO: may need to debug
         model = model.to(self.device)
 
         train_data_loader = TrainDataModule.create_data_loader(tokenizer)
         val_data_loader = ValDataModule.create_data_loader(tokenizer)
-
 
         # get list eval steps based on eval_freq
         epoch_steps = len(train_data_loader)
@@ -259,8 +186,6 @@ class Trainer:
                                                     num_warmup_steps=params['warmup_steps'],
                                                     num_training_steps=total_steps
         )
-
-
 
         global_step = 1
         eval_ind = 0
@@ -293,7 +218,6 @@ class Trainer:
             with progress:
                 task = progress.add_task("Training ...", total=len(train_data_loader))
                 for d in train_data_loader:
-                    
                     model.train()
 
                     input_ids = d["input_ids"].to(self.device)
@@ -306,7 +230,6 @@ class Trainer:
                                     attention_mask=attention_mask
                                 )
 
-
                     # getting loss and preds for the current batch
                     loss, preds, preds_proba, preds_proba_all = self._get_loss_pred(outputs, labels, loss_fn, threshold, binary)
 
@@ -318,7 +241,6 @@ class Trainer:
                     scheduler.step()
                     optimizer.zero_grad()
 
-
                     # record performance
                     running_train_loss += loss.item() # update running train loss
                     train_preds_l.extend(preds.tolist())
@@ -328,9 +250,7 @@ class Trainer:
                     if global_step == eval_steps[eval_ind]:
                         STEP_INFO = f'[EPOCH {epoch}][EVAL {eval_ind}]'
                         logging.info(f'{WORKER} {STEP_INFO}: Evaluateing at Step {global_step}....')
-
                         eval_ind += 1
-
                         val_preds, val_preds_probas, val_trues, val_losses = self._eval_model(
                                                                                                 model,
                                                                                                 val_data_loader,
@@ -346,9 +266,7 @@ class Trainer:
                         else:
                             average = multiclass_average
 
-                        
                         if focused_indexes: # if focused_indexes are passed in (multiclass only)
-
                             eval_results_im = self._evaluate_by_metrics(val_trues, val_preds, watch_list, average = None)
                             val_score_all = save_metric(val_trues, val_preds, average=None, zero_division=0)
                             
@@ -365,14 +283,11 @@ class Trainer:
                                 
                                 eval_results[label_name] = scores
                                     
-                                
                                 val_score_by_label[indexes_to_labels[index]] = round(val_score_all[index], 3)
                             
                                 logging.info(f'{WORKER} {STEP_INFO}: {output_str}')
                                 
-                                
                             val_score = np.mean(val_score_all[focused_indexes])
-                        
                         else: # if not focused index or binary
                             eval_results = self._evaluate_by_metrics(val_trues, val_preds, watch_list, average = average, log = STEP_INFO)
                             val_score = save_metric(val_trues, val_preds, average = average)
@@ -395,7 +310,6 @@ class Trainer:
 
                         # if a save path provided, better models will be checkpointed
                         if val_score > best_val_score: # if f1 score better. save model checkpoint                    
-                            
                             model_info = {
                                     'val_score': val_score,
                                     'val_loss': float(np.round(np.mean(val_losses), 4)),
@@ -406,7 +320,6 @@ class Trainer:
                                     'epoch': epoch,
                                     'step': global_step
                                 }
-                    
 
                             best_model = model
                             best_model_info = model_info
@@ -421,17 +334,12 @@ class Trainer:
         return best_model, best_model_info
 
 
-
 class Evaluator:
-
     def __init__(self, ModelModule, device):
-
         self.ModelModule = ModelModule
         self.device = device
     
-
     def eval_model_detailed(self, data_loader, device, binary = True):
-        
         model =  self.ModelModule.model
         model.eval()
         print('generating detailed evaluation..')
@@ -465,28 +373,20 @@ class Evaluator:
                     m = nn.Softmax(dim=1)
                     preds_proba, preds = torch.max(m(outputs), dim=1)
                     preds_probas_all =m(outputs).cpu().tolist()
-        
-                
+           
                 texts_l.extend(texts)
                 preds_l.extend(preds.tolist())
                 preds_probas_l.extend(preds_proba.tolist())
                 true_labels_l.extend(labels.tolist())
                 preds_probas_all_l.extend(preds_probas_all)
                 
-        
         return texts_l, preds_l, preds_probas_l, true_labels_l, preds_probas_all_l
     
-
     def predict_cohort(self, DataModule):
-
         tokenizer = self.ModelModule.tokenizer
-
         dataloader = DataModule.create_data_loader(tokenizer)
-
         texts_l, preds_l, preds_probas_l, true_labels_l, preds_probas_all_l = self.eval_model_detailed(dataloader, 
                                                                                                        self.device, 
                                                                                                        binary = DataModule.binary)
         
         return texts_l, preds_l, preds_probas_l, true_labels_l, preds_probas_all_l
-
-
