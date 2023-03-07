@@ -16,6 +16,9 @@ class Trainer:
                  device
                  ):
         self.device = device
+        logging.info(f'{WORKER}: Trainer initialized on {device}') 
+
+
         
     def _get_loss_pred(self, outputs, labels, loss_fn, threshold, binary):
         """
@@ -147,7 +150,6 @@ class Trainer:
                                         ).to(self.device)
             focused_indexes = None
             threshold = 0.5
-            num_classes = 1
         else: # multiclassfication
             ## Assign class weights
             class_weight = [] 
@@ -161,7 +163,6 @@ class Trainer:
             loss_fn = nn.CrossEntropyLoss(
                                                 weight = torch.tensor(class_weight).to(self.device)
                                                 ).to(self.device)
-            num_classes = len(labels_to_indexes)
 
         # load tokenizer and model
         tokenizer = ModelModule.tokenizer 
