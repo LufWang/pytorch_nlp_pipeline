@@ -169,11 +169,10 @@ class Trainer:
 
         # enable multiple GPU training
         model = ModelModule
-        if self.device == torch.device('cuda'):
+        if torch.cuda.device_count() > 1:
             num_gpus = torch.cuda.device_count()
             logging.info(f'{WORKER}: Detected {num_gpus} GPUs, utilizing all for training...')
-            model = nn.DataParallel(model, device_ids = list(range(num_gpus)))    ##multiple GPU Training
-            self.device = 'cuda:0'
+            model = nn.DataParallel(model)    ##multiple GPU Training
     
             
         model = model.to(self.device)
