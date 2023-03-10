@@ -11,6 +11,14 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, MofNCompleteColum
 
 WORKER = '[bold cyan]TRAINER[/bold cyan]'
 
+
+_EVAL_FUNCTIONS = {
+    'f1': f1_score,
+    'precision': precision_score,
+    'recall': recall_score
+}
+
+
 class Trainer:
     def __init__(self, 
                  device
@@ -18,8 +26,6 @@ class Trainer:
         self.device = device
         logging.info(f'{WORKER}: Trainer initialized on {device}') 
 
-
-        
     def _get_loss_pred(self, outputs, labels, loss_fn, threshold, binary):
         """
         get loss and prediction from output of NN
@@ -89,7 +95,7 @@ class Trainer:
         output_str = ''
 
         for metric_name in metrics_list:
-            metric_func = metrics_list[metric_name]
+            metric_func = _EVAL_FUNCTIONS[metric_name]
 
             if metric_name == 'confusion_matrix':
                 score = metric_func(y_true, y_pred)
@@ -115,14 +121,10 @@ class Trainer:
               params,
               eval_config = {
                 "focused_indexes": None,
-                "save_metric": f1_score,
+                "save_metric": 'f1',
                 "multiclass_average": "weighted",
                 "eval_freq": 1,
-                "watch_list": {
-                    "F1": f1_score,
-                    "Precision": precision_score,
-                    "Recall": recall_score
-                }
+                "watch_list": ["f1", "precision", "recall"]
               },
               early_stopping = None,
                                 ):
