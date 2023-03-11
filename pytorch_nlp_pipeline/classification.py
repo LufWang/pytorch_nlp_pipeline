@@ -138,7 +138,7 @@ class Trainer:
         
         # unpack variables in config
         watch_list = eval_config['watch_list']
-        save_metric = eval_config['save_metric']
+        save_metric_func = _EVAL_FUNCTIONS[eval_config['save_metric']]
         multiclass_average = eval_config['multiclass_average']
         eval_freq = eval_config['eval_freq']
         best_val_score = 0
@@ -279,9 +279,11 @@ class Trainer:
 
                         if focused_indexes: # if focused_indexes are passed in (multiclass only)
                             eval_results_im = self._evaluate_by_metrics(val_trues, val_preds, watch_list, average = None)
-                            val_score_all = save_metric(val_trues, val_preds, average=None, zero_division=0)
+                            val_score_all = save_metric_func(val_trues, val_preds, average=None, zero_division=0)
                             
                             eval_results = {}
+
+                            
                             # Log Score by Focused Indexes
                             for index in focused_indexes:
                                 label_name = indexes_to_labels[index]
@@ -301,7 +303,8 @@ class Trainer:
                             val_score = np.mean(val_score_all[focused_indexes])
                         else: # if not focused index or binary
                             eval_results = self._evaluate_by_metrics(val_trues, val_preds, watch_list, average = average, log = STEP_INFO)
-                            val_score = save_metric(val_trues, val_preds, average = average)
+                        
+                            val_score = save_metric_func(val_trues, val_preds, average = average)
 
                         val_scores_list.append(val_score)          
                         val_loss = np.mean(val_losses) # getting average val loss
