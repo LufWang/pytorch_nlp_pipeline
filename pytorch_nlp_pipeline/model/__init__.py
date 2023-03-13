@@ -28,6 +28,7 @@ def construct_model_head(input_size: int,
         seq_layers = []
         layer_num_counter = 1
 
+        print(hidden_layers)
     
         if hidden_layers:
             clf_head_layers = hidden_layers.append(num_classes)
