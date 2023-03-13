@@ -4,19 +4,20 @@ import pandas as pd
 
 WORKER = '[bold]DATAMODULE[/bold]'
 
-def split_data_w_sample(df, 
-                        label_col, 
-                        random_seed, 
-                        stratify_col,
+def split_data_w_sample(df: pd.DataFrame, 
+                        label_col: str, 
+                        random_seed: int, 
+                        stratify_col: str,
                         test_size = 0.1,
                         sample = None):
     """
-    pass in original dataframe - train, val, test split - adjust sample numbers by tree in training data
+    pass in original dataframe - train, test split - adjust sample numbers by tree in training data
     
     Input:
         dataframe
         label column name
         random seed
+        stratify col
         test size 
         sample: dictionary default None - 
      

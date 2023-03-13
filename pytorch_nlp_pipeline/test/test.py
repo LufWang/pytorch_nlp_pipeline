@@ -27,13 +27,13 @@ labels_to_indexes = {
 
 focused_indexes = None
 
+
 clf = model.PytorchNlpModel(
                         pretrained_type='BERT',
                         pretrained_path=pretrained_path,
-                        device='cpu',
                         n_classes=len(labels_to_indexes),
                         freeze_pretrained=False,
-                        head_hidden_size=512
+                        head_hidden_layers=[512]
                         )
 
 df_train, df_val = train_test_split(df, test_size = 0.2)
@@ -87,10 +87,9 @@ labels_to_indexes = {
 clf = model.PytorchNlpModel(
                         pretrained_type='BERT',
                         pretrained_path=pretrained_path,
-                        device='cpu',
                         n_classes=len(labels_to_indexes),
                         freeze_pretrained=False,
-                        head_hidden_size=512
+                        head_hidden_layers=[512]
                         )
 
 print(type(nn.DataParallel(clf)) == nn.DataParallel)

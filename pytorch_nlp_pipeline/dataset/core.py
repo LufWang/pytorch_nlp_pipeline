@@ -50,6 +50,19 @@ class TorchDataset(Dataset):
 
 class DatasetBase:
     def __init__(self, df, text_col, label_col, batch_size, max_len):
+        """
+        Dataset Base Module - should not be called directly, instead inherit this class 
+
+        input:
+            df -> pd.DataFrame
+            text_col -> str
+            label_col -> str
+            batch_size -> int
+            max_len -> int
+
+        """
+
+
         logging.info(f'{WORKER}: Dataset initiating ...')
         self.df = df
         self.text_col = text_col
@@ -62,12 +75,7 @@ class DatasetBase:
         Construct data loader, on a torch dataset
         
         input:
-            dataframe
-            text column name
-            label column name
             tokenizer
-            max_len
-            batch_size
             
         output:
             torch dataloader object

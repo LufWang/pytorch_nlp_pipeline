@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 
-VERSION = '0.1.1' 
+VERSION = '0.1.4' 
 DESCRIPTION = 'abstracted ML pipelines based on pytorch'
 LONG_DESCRIPTION = 'abstracted ML pipelines based on pytorch - mainly for text classification'
 
@@ -20,10 +20,9 @@ setup(
             'transformers==4.26.0',
             'pandas==1.5.3',
             'shortuuid==1.0.11',
-            'tabulate==0.9.0',
             'scikit-learn==1.2.1'
         ],
-        python_requires='>=3.9',
+        python_requires='>=3.8',
         classifiers= [
            ]
 )

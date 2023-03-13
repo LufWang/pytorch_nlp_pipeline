@@ -1,18 +1,22 @@
 from .core import DatasetBase
 import logging
+import pandas as pd
 
 WORKER = '[bold]DATAMODULE[/bold]'
 
 class ClfDataset(DatasetBase):
     def __init__(self, 
-                df,
-                text_col, 
-                label_col, 
-                labels_to_indexes, 
-                batch_size,
-                max_len, 
-                random_seed,
+                df: pd.DataFrame,
+                text_col: str, 
+                label_col: str, 
+                labels_to_indexes: dict, 
+                batch_size: int,
+                max_len: int, 
+                random_seed: int,
                 **kwargs):
+        """
+        Dataset specifically for text classification using pytorch
+        """
 
         super().__init__(df, text_col, label_col, batch_size, max_len)
         

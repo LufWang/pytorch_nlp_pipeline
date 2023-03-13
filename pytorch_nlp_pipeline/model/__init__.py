@@ -2,39 +2,35 @@ from transformers import BertModel, BertTokenizer, BioGptTokenizer, BioGptModel
 import logging
 from torch import nn
 from collections import OrderedDict
+from typing import Union
+
 
 
 WORKER = '[bold]ModelModule[/bold]'
 
-class ModelHead(nn.Module):
-    def __init__(self, input_size=512, hidden_size=None, num_classes=1):
-        super(ModelHead, self).__init__()
-        self.hidden_layers = []
-        if type(hidden_size) is not list:
-            hidden_size = [hidden_size]
-        hidden_size = [input_size] + hidden_size
-        for layer_num in range(len(hidden_size)-1):
-            self.hidden_layers.append(nn.Linear(hidden_size[layer_num], hidden_size[layer_num+1]))
-        self.output_layer = nn.Linear(hidden_size[-1], num_classes)
-        logging.info(f'{WORKER}: Classfication Head Added. Number of Hidden Layers - {len(self.hidden_layers)}. Number of Classes - {num_classes}')
-    
-    def forward(self, pretrained_output):
-        x = pretrained_output
-        for layer in self.hidden_layers:
-            x  = layer(x)
-        outputs = self.output_layer(x)
-        return outputs
 
 
+def construct_model_head(input_size: int, 
+                         hidden_layers: Union[list, None], 
+                         num_classes: int) -> nn.Sequential:
+        """
+        Construct classifier head layers 
 
-def get_ModelHead(input_size=512, hidden_size=None, num_classes=1):
+        Input:
+            input_size => int
+            hidden_size => if list, layers will be added sequatially based on list order
+            num_classes => int
+
+        Returns:
+            torch.nn.Sequential
+        """
+
         seq_layers = []
         layer_num_counter = 1
 
-        if type(hidden_size) is not list:
-            hidden_size = [hidden_size]
-
-        clf_head_layers = hidden_size + [num_classes]
+    
+        if hidden_layers:
+            clf_head_layers = hidden_layers.append(num_classes)
 
         
         for layer in clf_head_layers:
@@ -58,14 +54,27 @@ def get_ModelHead(input_size=512, hidden_size=None, num_classes=1):
 
 class PytorchNlpModel(nn.Module):
     def __init__(self, 
-                 pretrained_type, 
-                 pretrained_path, 
-                 device,
-                 n_classes, 
-                 freeze_pretrained=True, 
-                 head_hidden_size=[384, 'relu']
+                 pretrained_type: str, 
+                 pretrained_path: str, 
+                 n_classes: int, 
+                 freeze_pretrained: bool=True, 
+                 head_hidden_layers: Union[list, None] =[384, 'relu']
 
                  ):
+        """
+        Pytorch nn.Module that also includes tokenizer and can load pretrained models - for text classification
+
+        input: 
+            pretrained_type => str: e.g. 'BERT'
+            pertrained_path => str: local path to pretrained model dir or repo on hugging face hub
+            n_classes => int: number of classes to classify
+            freeze_pretrained => bool: whether to freeze pretrained layers
+            head_hidden_layers => list or None: hidden layers to add to classfication head
+        
+        Returns:
+            torch.nn.Module like pytorch model object
+        
+        """
         
         logging.info(f'{WORKER}: PytorchNlpModel initiating...')
         super(PytorchNlpModel, self).__init__()
@@ -83,8 +92,8 @@ class PytorchNlpModel(nn.Module):
         self.freeze_pretrained = freeze_pretrained
         self.drop = nn.Dropout(p=0.3)
         self.n_classes = n_classes
-        self.head = get_ModelHead(self.pretrained.config.hidden_size,
-                                      head_hidden_size,
+        self.head = construct_model_head(self.pretrained.config.hidden_size,
+                                      head_hidden_layers,
                                       self.n_classes)
         if freeze_pretrained:
             for param in self.pretrained.parameters():

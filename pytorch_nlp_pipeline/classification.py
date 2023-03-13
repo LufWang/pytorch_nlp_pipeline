@@ -20,8 +20,17 @@ _EVAL_FUNCTIONS = {
 
 
 class Trainer:
+    """
+    Trainer - can train pytorch model based on Dataset and Model passed in
+
+    Params:
+        device => torch.cuda.device: primary device to put model and data on
+    
+    """
+
+
     def __init__(self, 
-                 device
+                 device: torch.cuda.device
                  ):
         self.device = device
         logging.info(f'{WORKER}: Trainer initialized on {device}') 
@@ -128,9 +137,24 @@ class Trainer:
               },
               early_stopping = None,
                                 ):
+        """
+        function that trains the model
+
+        Params:
+            ModelModule => PytorchNlpModel Object
+            TrainDataModule => Dataset Object
+            ValDataModule =? Dataset Object
+            params => dict like
+            eval_config => dict like
+            early_stopping => int or None
+        
+        Returns
+            model => PytorchNlpModel
+            model_info => dict
+        """    
+    
         ## set up data 
         binary =TrainDataModule.binary
-        labels_to_indexes = TrainDataModule.labels_to_indexes
         indexes_to_labels = TrainDataModule.indexes_to_labels
         label_col = TrainDataModule.label_col
         threshold = 0
@@ -353,7 +377,7 @@ class Evaluator:
         self.ModelModule = ModelModule
         self.device = device
     
-    def eval_model_detailed(self, data_loader, device, binary = True):
+    def _eval_model_detailed(self, data_loader, device, binary = True):
         model =  self.ModelModule.model
         model.eval()
         print('generating detailed evaluation..')
@@ -399,7 +423,7 @@ class Evaluator:
     def predict_cohort(self, DataModule):
         tokenizer = self.ModelModule.tokenizer
         dataloader = DataModule.create_data_loader(tokenizer)
-        texts_l, preds_l, preds_probas_l, true_labels_l, preds_probas_all_l = self.eval_model_detailed(dataloader, 
+        texts_l, preds_l, preds_probas_l, true_labels_l, preds_probas_all_l = self._eval_model_detailed(dataloader, 
                                                                                                        self.device, 
                                                                                                        binary = DataModule.binary)
         
