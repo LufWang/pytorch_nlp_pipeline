@@ -34,7 +34,8 @@ def construct_model_head(input_size: int,
         if hidden_layers:
             clf_head_layers = hidden_layers.append(num_classes)
         
-            print('yes')
+            print(hidden_layers)
+            print(num_classes)
         
         for layer in clf_head_layers:
             if layer == 'relu':
