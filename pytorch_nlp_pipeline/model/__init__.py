@@ -92,6 +92,7 @@ class PytorchNlpModel(nn.Module):
         self.freeze_pretrained = freeze_pretrained
         self.drop = nn.Dropout(p=0.3)
         self.n_classes = n_classes
+        print(head_hidden_layers)
         self.head = construct_model_head(self.pretrained.config.hidden_size,
                                       head_hidden_layers,
                                       self.n_classes)
