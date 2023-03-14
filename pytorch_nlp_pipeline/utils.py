@@ -4,6 +4,7 @@ import os
 import shortuuid
 import json
 import torch
+import logging
 
 def get_config(params):
     # random pick a set of params
@@ -36,6 +37,8 @@ def save_model(model, tokenizer, model_name, save_path, files, save_mode=None):
     # change here 
     save_path_final = os.path.join(save_path, model_id + '-' + model_name)
 
+    logging.info(f'Model Saved to {save_path_final}')
+
     if not os.path.isdir(save_path_final):
         os.mkdir(save_path_final) # create directory for model if not exist
     
@@ -58,6 +61,7 @@ def save_model(model, tokenizer, model_name, save_path, files, save_mode=None):
 
     # save tokenizer
     tokenizer.save_pretrained(save_path_final)
+
     
     # save file in the files
     for file_name in files:
