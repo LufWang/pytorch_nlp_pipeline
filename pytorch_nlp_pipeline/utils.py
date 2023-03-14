@@ -20,7 +20,7 @@ def get_config(params):
         config[name] = choice
     return config
 
-def save_model(model, tokenizer, model_name, save_path, files, save_mode=None):
+def save_model(model, model_id, tokenizer, model_name, save_path, files, save_mode=None):
     """
     model - model
     tokenizer - tokenizer intialized using transformer
@@ -28,8 +28,7 @@ def save_model(model, tokenizer, model_name, save_path, files, save_mode=None):
     save_path - path
     files - dict of files with key to be names and values to be files to be saved in the same directory, have to be all json files
     """                  
-    # generate ID
-    model_id = shortuuid.ShortUUID().random(length=12)
+    
                     
     if not os.path.isdir(save_path):
         os.mkdir(save_path) # create directory if not exist
