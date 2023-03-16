@@ -378,7 +378,7 @@ class Evaluator:
         self.device = device
     
     def _eval_model_detailed(self, data_loader, device, binary = True):
-        model =  self.ModelModule.model
+        model =  self.ModelModule
         model.eval()
         print('generating detailed evaluation..')
         
