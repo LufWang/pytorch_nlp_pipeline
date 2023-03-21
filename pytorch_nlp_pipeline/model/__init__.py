@@ -6,7 +6,7 @@ from typing import Union
 
 
 
-WORKER = '[bold]ModelModule[/bold]'
+WORKER = 'ModelModule'
 
 
 

@@ -9,7 +9,7 @@ import logging
 from rich.progress import Progress, SpinnerColumn, TextColumn, MofNCompleteColumn, BarColumn, TimeElapsedColumn, TimeRemainingColumn
 
 
-WORKER = '[bold cyan]TRAINER[/bold cyan]'
+WORKER = 'TRAINER'
 
 
 _EVAL_FUNCTIONS = {

@@ -2,7 +2,7 @@ from .core import DatasetBase
 import logging
 import pandas as pd
 
-WORKER = '[bold]DATAMODULE[/bold]'
+WORKER = 'DataModule'
 
 class ClfDataset(DatasetBase):
     def __init__(self, 
