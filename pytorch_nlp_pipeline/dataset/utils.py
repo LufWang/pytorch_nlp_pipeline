@@ -2,7 +2,7 @@ from sklearn.model_selection import train_test_split
 import logging
 import pandas as pd
 
-WORKER = '[bold]DATAMODULE[/bold]'
+WORKER = 'DataModule'
 
 def split_data_w_sample(df: pd.DataFrame, 
                         label_col: str, 

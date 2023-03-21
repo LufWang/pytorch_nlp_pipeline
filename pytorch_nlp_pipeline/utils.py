@@ -44,9 +44,13 @@ def save_model(model, model_id, tokenizer, model_name, save_path, files, save_mo
     # save torch model TODO
     if save_mode is None:
         torch.save(model.state_dict(), os.path.join(save_path_final, model_id + '-' + 'model.bin'))  # save model
+
+        if type(model) == torch.nn.DataParallel:
+            torch.save(model.module.state_dict(), os.path.join(save_path_final, model_id + '-' + 'model.bin'))
+        else:
+            torch.save(model.state_dict(), os.path.join(save_path_final, model_id + '-' + 'model.bin'))
     elif save_mode == 'body-only':
         # only save embedding part
-        #TODO might need debug - might need to create the dir
         if type(model) == torch.nn.DataParallel:
             model.module.pretrained.save_pretrained(save_path_final)
         else:

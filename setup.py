@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 
-VERSION = '0.1.7' 
+VERSION = '0.1.9' 
 DESCRIPTION = 'abstracted ML pipelines based on pytorch'
 LONG_DESCRIPTION = 'abstracted ML pipelines based on pytorch - mainly for text classification'
 

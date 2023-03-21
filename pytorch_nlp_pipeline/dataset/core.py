@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 import logging
 
-WORKER = '[bold]DATAMODULE[/bold]'
+WORKER = 'DataModule'
 
 class TorchDataset(Dataset):
     """
