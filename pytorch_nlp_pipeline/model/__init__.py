@@ -49,11 +49,32 @@ def construct_model_head(input_size: int,
         return nn.Sequential(OrderedDict(seq_layers))
 
 
+
+class SimpleNN(nn.module):
+    def __init__(self, 
+            input_size,
+            output_size,
+            hidden_layers: Union[list, None] =[384, 'relu']
             
+                ):
+        logging.info(f'{WORKER}: Simple Pytorch NN initiating...')
+
+        self.network = construct_model_head(input_size, hidden_layers, output_size)
+
+        logging.info(f'{WORKER}: Simple Pytorch NN Initiated..')
+
+
+    def forward(self, x):
+        
+        outputs = self.network(x)
+
+        return outputs
+        
+
     
  
 
-class PytorchNlpModel(nn.Module):
+class TransformerNN(nn.Module):
     def __init__(self, 
                  pretrained_type: str, 
                  pretrained_path: str, 
@@ -77,8 +98,8 @@ class PytorchNlpModel(nn.Module):
         
         """
         
-        logging.info(f'{WORKER}: PytorchNlpModel initiating...')
-        super(PytorchNlpModel, self).__init__()
+        logging.info(f'{WORKER}: TransformerNN initiating...')
+        super(TransformerNN, self).__init__()
         self.pretrained_type = pretrained_type
 
         if pretrained_type == 'BERT':
@@ -101,7 +122,7 @@ class PytorchNlpModel(nn.Module):
             for param in self.pretrained.parameters():
                 param.requires_grad = False
                 
-        logging.info(f'{WORKER}: PytorchNlpModel of type {pretrained_type} with classification head initiated.')
+        logging.info(f'{WORKER}: TransformerNN of type {pretrained_type} with classification head initiated.')
         logging.info(f'{WORKER}: pretrained model freezed - {freeze_pretrained}')
 
     
