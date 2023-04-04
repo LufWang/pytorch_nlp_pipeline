@@ -50,7 +50,7 @@ def construct_model_head(input_size: int,
 
 
 
-class SimpleNN(nn.module):
+class SimpleNN(nn.Module):
     def __init__(self, 
             input_size,
             output_size,
