@@ -57,7 +57,10 @@ class SimpleNN(nn.module):
             hidden_layers: Union[list, None] =[384, 'relu']
             
                 ):
+        
         logging.info(f'{WORKER}: Simple Pytorch NN initiating...')
+
+        super(SimpleNN, self).__init__()
 
         self.network = construct_model_head(input_size, hidden_layers, output_size)
 

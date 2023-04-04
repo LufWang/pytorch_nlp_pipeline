@@ -6,19 +6,6 @@ import json
 import torch
 import logging
 
-def get_config(params):
-    # random pick a set of params
-    config = {}
-    for name in params:
-        choice = np.random.choice(params[name])
-        if type(choice) == np.int64:
-            choice = int(choice)
-        elif type(choice) == np.float64:
-            choice= float(choice)
-        elif type(choice) == np.str_:
-            choice = str(choice)
-        config[name] = choice
-    return config
 
 def save_model(model, model_id, tokenizer, model_name, save_path, files, save_mode=None):
     """
@@ -71,26 +58,6 @@ def save_model(model, model_id, tokenizer, model_name, save_path, files, save_mo
         with open(os.path.join(save_path_final, model_id + '-' + file_name), 'w', encoding='utf-8') as f:
             json.dump(files[file_name], f, ensure_ascii=False, indent=4)
 
-def save_model_GCS(model, tokenizer, model_name, files, bucket_name, dir_path):
-    saver = GCS_saver(bucket_name)
-    
-    # generate ID
-    model_id = shortuuid.ShortUUID().random(length=12)
-    # change here 
-    blob_name_dir = os.path.join(dir_path, model_id + '-' + model_name)
-    # save torch model
-    model_name = model_id + '-' + 'model.bin'
-    blob_name = os.path.join(blob_name_dir, model_name)
-    saver.upload_torch_model(model, blob_name)
-    # save tokenizer
-    saver.upload_pretrained_tokenizer(tokenizer, blob_name_dir)
-    
-    # save file in the files
-    for file_name in files:
-        file = json.dumps(files[file_name], ensure_ascii=False, indent=4)
-        file_name = model_id + '-' + file_name
-        blob_name = os.path.join(blob_name_dir, file_name)
-        saver.upload_from_memory(file, blob_name, content_type='application/json')
 
 class GCS_saver:
     def __init__(self, bucket_name):
