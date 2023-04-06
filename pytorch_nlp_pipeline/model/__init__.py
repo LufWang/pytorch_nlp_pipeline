@@ -52,8 +52,8 @@ def construct_model_head(input_size: int,
 class SimpleNN(nn.Module):
     def __init__(self, 
             input_size,
-            output_size,
-            hidden_layers: Union[list, None] =[384, 'relu']
+            hidden_layers: list,
+            output_size
             
                 ):
         
@@ -144,6 +144,7 @@ class EnsembleTransformer(nn.Module):
                  model1,
                  model2,
                  model3,
+                 tokenizer,
                  hidden_layers: list,
                  num_classes: int
 
@@ -155,6 +156,7 @@ class EnsembleTransformer(nn.Module):
         self.model1 = model1
         self.model2 = model2
         self.model3 = model3
+        self.tokenizer = tokenizer
 
         self.out = construct_model_head(3 * 768, hidden_layers, num_classes)  
 
