@@ -20,7 +20,8 @@ setup(
             'transformers==4.26.0',
             'pandas==1.5.3',
             'shortuuid==1.0.11',
-            'scikit-learn==1.2.1'
+            'scikit-learn==1.2.1',
+            'contractions'
         ],
         python_requires='>=3.8',
         classifiers= [

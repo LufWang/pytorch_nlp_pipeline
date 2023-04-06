@@ -1,10 +1,16 @@
 from sklearn.model_selection import train_test_split
 import logging
 import pandas as pd
+import contractions
 
 WORKER = 'DataModule'
 
+def text_preprocess(text):
+    text = str(text).lower().strip()
 
+    text = contractions.fix(text)
+
+    return text 
 
 def split_data_w_sample(df: pd.DataFrame, 
                         label_col: str, 
