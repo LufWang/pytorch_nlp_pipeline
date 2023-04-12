@@ -1,13 +1,12 @@
 from setuptools import setup, find_packages
 
 
-VERSION = '0.1.10' 
+VERSION = '0.1.11' 
 DESCRIPTION = 'abstracted ML pipelines based on pytorch'
 LONG_DESCRIPTION = 'abstracted ML pipelines based on pytorch - mainly for text classification'
 
 # Setting up
 setup(
-       # the name must match the folder name 'verysimplemodule'
         name="pytorch_nlp_pipeline", 
         version=VERSION,
         author="Lufei Wang",
@@ -16,7 +15,7 @@ setup(
         long_description=LONG_DESCRIPTION,
         packages=find_packages(),
         install_requires=[
-            'torch==1.12.1',
+            'torch==1.13.1',
             'transformers==4.26.0',
             'pandas==1.5.3',
             'shortuuid==1.0.11',

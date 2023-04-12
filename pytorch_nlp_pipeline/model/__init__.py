@@ -141,9 +141,7 @@ class TransformerNN(nn.Module):
 class EnsembleTransformer(nn.Module):
 
     def __init__(self,
-                 model1,
-                 model2,
-                 model3,
+                 models: list,
                  tokenizer,
                  hidden_layers: list,
                  num_classes: int
@@ -153,22 +151,20 @@ class EnsembleTransformer(nn.Module):
         super(EnsembleTransformer, self).__init__()
 
 
-        self.model1 = model1
-        self.model2 = model2
-        self.model3 = model3
+        self.models = models
         self.tokenizer = tokenizer
 
-        self.out = construct_model_head(3 * 768, hidden_layers, num_classes)  
+        self.out = construct_model_head(len(models) * 768, hidden_layers, num_classes)  
 
     
     def forward(self, input_ids, attention_mask):
-        x1 = self.model1(input_ids = input_ids, 
-                         attention_mask = attention_mask)
-        x2 = self.model2(input_ids = input_ids, 
-                         attention_mask = attention_mask)
-        x3 = self.model3(input_ids = input_ids, 
-                         attention_mask = attention_mask)
+        outputs = []
+        for model in self.models:
+            output = model(input_ids = input_ids, 
+                            attention_mask = attention_mask)
+            outputs.append(output[1])
+    
 
-        x = torch.cat((x1[1], x2[1], x3[1]), dim = 1)
+        x = torch.cat(outputs, dim = 1)
 
         return self.out(x)
