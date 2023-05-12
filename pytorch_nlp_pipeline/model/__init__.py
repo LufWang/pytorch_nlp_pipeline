@@ -1,4 +1,4 @@
-from transformers import BertModel, BertTokenizer, BioGptTokenizer, BioGptModel
+from transformers import BertModel, BertTokenizer, BioGptTokenizer, BioGptModel, AlbertTokenizer, AlbertModel
 import logging
 from torch import nn
 import torch
@@ -110,6 +110,9 @@ class TransformerNN(nn.Module):
         elif pretrained_type == 'BioGPT':
             self.tokenizer = BioGptTokenizer.from_pretrained(pretrained_path)
             self.pretrained = BioGptModel.from_pretrained(pretrained_path)
+        elif pretrained_type == 'ALBERT':
+            self.tokenizer = AlbertTokenizer.from_pretrained(pretrained_path)
+            self.pretrained = AlbertModel.from_pretrained(pretrained_path)
 
         logging.info(f'{WORKER}: tokenizer and pretrained for {pretrained_type} loaded.')
         self.pretrained_path = pretrained_path
@@ -130,7 +133,7 @@ class TransformerNN(nn.Module):
     def forward(self, input_ids, attention_mask):
         outputs  = self.pretrained(input_ids = input_ids, 
                                       attention_mask = attention_mask)
-        if self.pretrained_type == 'BERT':
+        if self.pretrained_type in ['BERT', 'ALBERT']:
             outputs = self.drop(outputs[1])
             outputs = self.head(outputs)
         elif self.pretrained_type == 'BioGPT':
