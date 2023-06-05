@@ -5,6 +5,7 @@ import shortuuid
 import json
 import torch
 import logging
+from model import TransformerNN
 
 
 def save_model(model, model_id, tokenizer, model_name, save_path, files, save_mode=None):
@@ -21,7 +22,7 @@ def save_model(model, model_id, tokenizer, model_name, save_path, files, save_mo
         os.mkdir(save_path) # create directory if not exist
 
     # change here 
-    save_path_final = os.path.join(save_path, model_id + '-' + model_name)
+    save_path_final = os.path.join(save_path, model_name + '-' + model_id)
 
     logging.info(f'Model Saved to {save_path_final}')
 
@@ -57,6 +58,32 @@ def save_model(model, model_id, tokenizer, model_name, save_path, files, save_mo
     for file_name in files:
         with open(os.path.join(save_path_final, model_id + '-' + file_name), 'w', encoding='utf-8') as f:
             json.dump(files[file_name], f, ensure_ascii=False, indent=4)
+
+def load_model(model_dir, pretrained_path, pretrain_type, mode=None):
+
+    model_id = model_dir.split('/')[-1].split('-')[0]
+
+    labels_to_indexes = json.load(open(f'{model_dir}/{model_id}-labels_to_indexes.json', 'rb'))
+    indexes_to_labels = json.load(open(f'{model_dir}/{model_id}-indexes_to_labels.json', 'rb'))
+
+    clf = TransformerNN(
+                            pretrained_type=pretrain_type,
+                            pretrained_path=pretrained_path,
+                            n_classes=len(labels_to_indexes),
+                            freeze_pretrained=False,
+                            head_hidden_layers=[]
+                            )
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model_path = f'{model_dir}/{model_id}-model.bin'
+
+    if mode == 'head-only':
+        clf.head.load_state_dict(torch.load(model_path))
+    else:
+        clf.load_state_dict(torch.load(model_path))
+
+    clf = clf.to(device)
+
+    return clf, labels_to_indexes, indexes_to_labels
 
 
 class GCS_saver:
