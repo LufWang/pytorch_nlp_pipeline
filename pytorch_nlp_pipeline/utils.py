@@ -1,11 +1,11 @@
 import numpy as np
 from google.cloud import storage
 import os
-import shortuuid
 import json
 import torch
 import logging
-from model import TransformerNN
+import shortuuid
+
 
 
 def save_model(model, model_id, tokenizer, model_name, save_path, files, save_mode=None):
@@ -59,7 +59,7 @@ def save_model(model, model_id, tokenizer, model_name, save_path, files, save_mo
         with open(os.path.join(save_path_final, model_id + '-' + file_name), 'w', encoding='utf-8') as f:
             json.dump(files[file_name], f, ensure_ascii=False, indent=4)
 
-def load_model(model_dir, pretrained_path, pretrain_type, mode=None):
+def load_model(TransformerNN, model_dir, pretrained_path, pretrain_type, mode=None):
 
     model_id = model_dir.split('/')[-1].split('-')[0]
 
